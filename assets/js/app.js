@@ -212,7 +212,7 @@ function homeView() {
     '<button type="button" class="btn-primary" data-go="' + (p ? 'dashboard' : 'login') + '">' + (p ? 'Open my dashboard' : 'Get started — it\u2019s free') + '</button>' +
     '<button type="button" class="btn-ghost" data-go="guide">I\u2019m new — show me the guide</button></div>' +
     (p ? '<p style="margin-top:16px;font-size:.9rem;font-weight:600;color:var(--accent)">Welcome back, ' + esc(p.name) + ' (' + esc(p.role) + ')</p>' : '') +
-    '</div><div class="card" style="overflow:hidden;padding:0"><img src="assets/hero.webp" alt="Illustration of a VU student studying at her desk with a laptop, calendar and books" style="width:100%;height:100%;object-fit:cover"></div></section>' +
+    '</div><div class="card" style="overflow:hidden;padding:0;background:linear-gradient(135deg,var(--accent),var(--amber));display:flex;align-items:center;justify-content:center;min-height:260px"><span style="font-size:7rem" aria-hidden="true">🦉</span></div></section>' +
     '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">' + (p ? 'Your semester at a glance' : 'Inside the hub right now') + '</h2>' +
     '<div class="grid sm2 lg4 mt" style="gap:16px">' + glance +
     stat('Notes saved', String(c.notes), 'Organised by course & lecture') +
