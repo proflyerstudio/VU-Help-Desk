@@ -67,9 +67,15 @@ textarea.field{min-height:110px;line-height:1.55;resize:vertical}
 .chip-amber{background:var(--amber-soft);color:#8a5c07}
 html[data-theme="dark"] .chip-amber{color:var(--amber)}
 .grid{display:grid;gap:16px}
-.g2{grid-template-columns:repeat(2,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g4{grid-template-columns:repeat(4,1fr)}
+/* Two/three/four-column helper grids: single column on phones, they only
+   split once there is room — previously they squeezed 2–4 columns into
+   a 360px screen. */
+.g2,.g3,.g4{grid-template-columns:1fr}
+@media(min-width:640px){.g2,.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+/* GDB title + course-code row: stacked on phones, side by side on tablets+ */
+.gdb-head{grid-template-columns:1fr}
+@media(min-width:640px){.gdb-head{grid-template-columns:1fr 180px}}
 @media(min-width:640px){.sm2{grid-template-columns:repeat(2,1fr)}.sm4{grid-template-columns:repeat(4,1fr)}}
 @media(min-width:1024px){.lg2{grid-template-columns:repeat(2,1fr)}.lg3{grid-template-columns:repeat(3,1fr)}.lg4{grid-template-columns:repeat(4,1fr)}.lg-side{grid-template-columns:380px 1fr}.lg-side2{grid-template-columns:420px 1fr}.lg-2col{grid-template-columns:1fr 340px}.lg-5{grid-template-columns:repeat(5,1fr)}}
 .mt{margin-top:16px}.mt2{margin-top:24px}.mt3{margin-top:32px}.mb{margin-bottom:16px}
@@ -113,9 +119,9 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
 pre,code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* --- Polished header, search, breadcrumbs, mascot, footer --- */
+/* --- Polished header, search, breadcrumbs, footer --- */
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);flex-shrink:0}
-.brand-mascot{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid var(--accent)}
+.brand-icon{width:44px;height:44px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid var(--accent);flex-shrink:0}
 .brand-text{display:flex;flex-direction:column;line-height:1.15}
 .brand-text b{font-family:Fraunces,Georgia,serif;font-size:1.15rem}
 .brand-text small{color:var(--dim);font-size:.72rem;font-weight:600}
@@ -132,10 +138,6 @@ pre,code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .crumbs a{color:var(--accent);text-decoration:none}
 .crumbs a:hover{text-decoration:underline}
 .crumbs .sep{opacity:.6}
-.mascot{display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,var(--accent-soft),var(--amber-soft));border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 24px}
-.mascot .face{font-size:3rem;line-height:1;flex-shrink:0}
-.mascot h3{font-family:Fraunces,Georgia,serif;font-size:1.3rem}
-.mascot p{margin-top:4px;font-size:.95rem}
 footer.site .cols{display:grid;gap:24px}
 @media(min-width:768px){footer.site .cols{grid-template-columns:1.4fr 1fr 1fr}}
 footer.site .foot-bottom{margin-top:24px;border-top:2px solid var(--border);padding-top:16px;display:flex;flex-wrap:wrap;gap:4px 24px;justify-content:space-between;font-size:.85rem;font-weight:600;color:var(--dim)}
@@ -150,10 +152,22 @@ footer.site ul a:hover{color:var(--accent);text-decoration:underline}
 }
 /* compact header on small phones: icon-only Menu/Theme buttons, no brand tagline */
 @media(max-width:640px){
-  .topbar{gap:8px}
+  .topbar{gap:6px}
+  .brand{gap:8px}
   .brand-text small{display:none}
-  .brand-mascot{width:36px;height:36px;font-size:1.35rem}
+  .brand-icon{width:34px;height:34px;font-size:1.3rem}
   .brand-text b{font-size:1.05rem}
   .menu-label,.theme-label{display:none}
   #menuBtn,#themeBtn{padding-left:.7rem;padding-right:.7rem}
+  /* home subject search: input and button each take the full width */
+  #homeSubjectForm input,#homeSubjectForm button{flex:1 1 100%;width:100%}
+  /* one-column tool cards already; keep the glance stats readable */
+  .stat .val{font-size:1.6rem}
+  main{padding-top:20px}
+}
+/* very small phones: shrink the brand so Menu + brand + Theme + Login fit one row */
+@media(max-width:380px){
+  .brand-text b{font-size:.95rem}
+  .brand-icon{width:30px;height:30px;font-size:1.15rem}
+  .topbar{gap:4px}
 }

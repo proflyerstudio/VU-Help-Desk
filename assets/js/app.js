@@ -133,7 +133,7 @@ function footerHtml() {
       return '<li><a href="#/' + x[0] + '">' + esc(x[1]) + '</a></li>';
     }).join('');
   return '<footer class="site"><div class="cols">' +
-    '<div><h3>🦉 VU Help Desk</h3>' +
+    '<div><h3>🎓 VU Help Desk</h3>' +
     '<p style="font-size:.9rem;color:var(--dim)">Every VU problem, one friendly home — FAQ, notes, past papers, study planner, CGPA maths and exam help for Virtual University students, free to use with no sign-in wall.</p>' +
     '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Not an official VU website. Always confirm fees, dates and rules on VULMS and vu.edu.pk. Your account and saved work live in this browser.</p></div>' +
     '<div><h3>Quick links</h3><ul>' + quick + '</ul></div>' +
@@ -230,9 +230,9 @@ function homeView() {
     : '<div class="card" style="padding:20px"><p class="small" style="font-weight:600;color:var(--dim)">Degree progress</p>' +
       '<p class="dim" style="margin-top:8px">Create your account, add your completed courses, and this card becomes your personal degree tracker — credits, CGPA and what\u2019s left.</p>' +
       '<button type="button" class="btn-ghost" style="width:100%;margin-top:16px" data-go="degree">Set up my degree</button></div>';
-  return '<section class="grid lg2" style="align-items:center;gap:32px"><div>' +
+  return '<section style="max-width:44rem"><div>' +
     '<span class="chip chip-amber">Free to use · No sign-in wall</span>' +
-    '<h1 class="font-display" style="margin-top:16px;font-size:2.5rem;line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
+    '<h1 class="font-display" style="margin-top:16px;font-size:clamp(1.9rem,7vw,2.5rem);line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
     '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 16 working tools in one place. No Facebook-group archaeology required.</p>' +
     '<form id="homeSubjectForm" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" role="search" aria-label="Find a subject"><label class="sr-only" for="homeSubjectInput">Apna subject code likhein</label><input id="homeSubjectInput" class="field" style="flex:1;min-width:220px;font-size:1.05rem" placeholder="Apna subject code likhein — jaise CS101" autocomplete="off"><button type="submit" class="btn-primary">Open subject →</button></form>' +
     '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px" aria-label="Popular subjects">' + ['CS101', 'MTH101', 'ENG101', 'MGT101', 'STA301', 'CS201'].map(function (c) { return '<button type="button" class="chip" data-subject="' + c + '" style="font-weight:700">' + c + '</button>'; }).join('') + '</div>' +
@@ -240,7 +240,7 @@ function homeView() {
     '<button type="button" class="btn-primary" data-go="' + (p ? 'dashboard' : 'login') + '">' + (p ? 'Open my dashboard' : 'Get started — it\u2019s free') + '</button>' +
     '<button type="button" class="btn-ghost" data-go="guide">I\u2019m new — show me the guide</button></div>' +
     (p ? '<p style="margin-top:16px;font-size:.9rem;font-weight:600;color:var(--accent)">Welcome back, ' + esc(p.name) + ' (' + esc(p.role) + ')</p>' : '') +
-    '</div><div class="card" style="overflow:hidden;padding:0;background:linear-gradient(135deg,var(--accent),var(--amber));display:flex;align-items:center;justify-content:center;min-height:260px"><span style="font-size:7rem" aria-hidden="true">🦉</span></div></section>' +
+    '</div></section>' +
     '<section class="mt3"><div class="card" style="padding:24px;background:var(--accent-soft)"><h2 class="font-display" style="font-size:1.25rem">Start here in 2 minutes — no account needed</h2><div class="grid sm2 lg3 mt" style="gap:16px">' +
     '<div><p class="font-display" style="font-weight:900;font-size:1.5rem;color:var(--accent)">1</p><p style="margin-top:4px"><strong>Search your subject</strong> in the box above — type CS101 and press Enter.</p></div>' +
     '<div><p class="font-display" style="font-weight:900;font-size:1.5rem;color:var(--accent)">2</p><p style="margin-top:4px"><strong>Open its Subject Hub</strong> — key points, important topics, quiz and your notes, all on one page.</p></div>' +
@@ -250,7 +250,7 @@ function homeView() {
     stat('Notes saved', String(c.notes), 'Organised by course & lecture') +
     stat('Exams planned', String(c.datesheetItems), 'On your test datesheet') +
     stat('Questions answered', String(c.answers), 'By the community so far') + '</div></section>' +
-    '<section class="mt3"><div class="mascot"><span class="face" aria-hidden="true">🦉</span><div><h3>Meet Vee, your study buddy</h3><p>Vee the owl lives here to cheer you on — no sign-in, no locked doors. Everything on this page is open: read the FAQ, try a quiz, plan your CGPA. Vee\u2019s tip for today: <b>submit assignments 24 hours early</b> — last-hour uploads are the #1 cause of lost marks.</p></div><button type="button" class="btn-amber" style="flex-shrink:0" data-go="guide">Vee, guide me →</button></div></section>' +
+    '<section class="mt3"><div class="card" style="padding:20px 24px;background:var(--amber-soft);display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between"><div style="flex:1;min-width:220px"><h3 class="font-display" style="font-size:1.25rem">Tip of the day</h3><p style="margin-top:4px">Submit assignments 24 hours early — last-hour uploads are the #1 cause of lost marks.</p></div><button type="button" class="btn-amber" style="flex-shrink:0" data-go="guide">Open the guide →</button></div></section>' +
     '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">Everything, in one index</h2><p class="dim" style="margin-top:4px">16 tools, each built for one real problem. Tap any card to start.</p>' +
     '<div class="grid sm2 lg3 mt" style="gap:16px">' + cards + '</div></section>' +
     '<section class="mt3 grid lg3" style="gap:16px">' +
@@ -950,7 +950,7 @@ function gdbView() {
   var drafts = store.drafts();
   return head('Tool 08 · Writing', 'GDB Drafter', 'The problem: GDB boards open for 2–3 days, and rushed posts written at midnight read like it. Draft here calmly — with live counts and structure help — then paste into VULMS.') +
     '<div class="grid lg-2col" style="gap:24px"><div class="card" style="padding:24px;display:grid;gap:16px;height:fit-content">' +
-    '<div class="grid" style="grid-template-columns:1fr 180px;gap:16px"><div><label class="field-label" for="gdb-title">GDB topic / title</label><input id="gdb-title" class="field" value="' + esc(u.title) + '" placeholder="e.g. Should AI tools be allowed in assignments?"></div>' +
+    '<div class="grid gdb-head" style="gap:16px"><div><label class="field-label" for="gdb-title">GDB topic / title</label><input id="gdb-title" class="field" value="' + esc(u.title) + '" placeholder="e.g. Should AI tools be allowed in assignments?"></div>' +
     '<div><label class="field-label" for="gdb-code">Course code</label><input id="gdb-code" class="field" value="' + esc(u.courseCode) + '" placeholder="CS101"></div></div>' +
     '<div><label class="field-label" for="gdb-body">Your draft</label><textarea id="gdb-body" class="field" style="min-height:260px;font-size:1.05rem;line-height:1.7" placeholder="Write in your own words. Structure that scores: 1) your clear position, 2) one or two reasons, 3) a real example, 4) a short conclusion.">' + esc(content) + '</textarea></div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:8px">' + GDB_STARTERS.map(function (s) { return '<button type="button" class="chip" data-starter="' + esc(s) + '">+ “' + esc(s.slice(0, 34)) + '…”</button>'; }).join('') + '</div>' +

@@ -35,8 +35,8 @@ repository, with no server and no database.
   **Admin Panel** (contact inbox; approve / reject / delete course reviews,
   stories, questions and centre reviews).
 - **Friendly emerald / amber / ink theme**, light & dark mode, fully
-  responsive on phone, tablet and desktop. Meet **Vee the owl** 🦉, the
-  site's mascot, on the home page.
+  responsive on phone, tablet and desktop, with a clean typographic
+  logo.
 - **Persistence:** everything you add is saved in your browser's
   localStorage only. Community sections (Course Reviews, Stories, Ask the
   Community) start **empty** — no fake reviews or stories are pre-filled.
