@@ -82,7 +82,8 @@ var VIEWS = {
   gdb: 'GDB Drafter', datesheet: 'Datesheet Scheduler', quiz: 'Quiz Practice',
   papers: 'Past Papers Guide', subject: 'Subject Hub',
   assignments: 'Assignments & GDB Guide',
-  cgpa: 'CGPA Planner', stories: 'Stories', health: 'Health Desk', ask: 'Ask the Community'
+  cgpa: 'CGPA Planner', stories: 'Stories', health: 'Health Desk', ask: 'Ask the Community',
+  privacy: 'Privacy Policy', disclaimer: 'Disclaimer', terms: 'Terms & Conditions'
 };
 var TOOLS = [
   { n: '01', view: 'faq', title: 'FAQ — Top 50 Answers', blurb: 'The 50 questions every VU student asks, answered in one searchable place.', solves: 'No more digging through Facebook groups' },
@@ -141,7 +142,13 @@ function footerHtml() {
     '<li><a href="' + D.VULMS_URL + '" target="_blank" rel="noreferrer">Open VULMS ↗</a></li>' +
     '<li><a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer">Official VU website (vu.edu.pk) ↗</a></li>' +
     '<li><a href="#/about">About this project</a></li><li><a href="#/contact">Contact us</a></li></ul>' +
-    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Ye VU Help Desk ka apna account hai. VULMS ke liye vulms.vu.edu.pk par jayein.</p></div></div>' +
+    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Ye VU Help Desk ka apna account hai. VULMS ke liye vulms.vu.edu.pk par jayein.</p></div>' +
+    '<div><h3><span aria-hidden="true">❓</span> Help &amp; Support</h3><ul>' +
+    '<li><a href="#/contact">Contact Us</a></li>' +
+    '<li><a href="#/about">About Us</a></li>' +
+    '<li><a href="#/privacy">Privacy Policy</a></li>' +
+    '<li><a href="#/disclaimer">Disclaimer</a></li>' +
+    '<li><a href="#/terms">Terms &amp; Conditions</a></li></ul></div></div>' +
     '<div class="foot-bottom"><span>© 2026 VU Help Desk</span><span>Made for Virtual University students</span></div></footer>';
 }
 function navHtml() {
@@ -234,7 +241,7 @@ function homeView() {
     '<span class="chip chip-amber">Free to use · No sign-in wall</span>' +
     '<h1 class="font-display" style="margin-top:16px;font-size:clamp(1.9rem,7vw,2.5rem);line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
     '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 16 working tools in one place. No Facebook-group archaeology required.</p>' +
-    '<form id="homeSubjectForm" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" role="search" aria-label="Find a subject"><label class="sr-only" for="homeSubjectInput">Apna subject code likhein</label><input id="homeSubjectInput" class="field" style="flex:1;min-width:220px;font-size:1.05rem" placeholder="Apna subject code likhein — jaise CS101" autocomplete="off"><button type="submit" class="btn-primary">Open subject →</button></form>' +
+    '<form id="homeSubjectForm" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" role="search" aria-label="Find a subject"><label class="sr-only" for="homeSubjectInput">Find a subject</label><input id="homeSubjectInput" class="field" style="flex:1;min-width:220px;font-size:1.05rem" placeholder="Apna subject code likhein — jaise CS101" autocomplete="off"><button type="submit" class="btn-primary">Open subject →</button></form>' +
     '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px" aria-label="Popular subjects">' + ['CS101', 'MTH101', 'ENG101', 'MGT101', 'STA301', 'CS201'].map(function (c) { return '<button type="button" class="chip" data-subject="' + c + '" style="font-weight:700">' + c + '</button>'; }).join('') + '</div>' +
     '<div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px">' +
     '<button type="button" class="btn-primary" data-go="' + (p ? 'dashboard' : 'login') + '">' + (p ? 'Open my dashboard' : 'Get started — it\u2019s free') + '</button>' +
@@ -381,6 +388,45 @@ contactView.onMount = function () {
     $('contactMsg').innerHTML = '<div class="note-ok" role="status">Message sent! The admin team can read it in the Admin Panel inbox.</div>';
   });
 };
+
+/* ---------- Privacy, Disclaimer & Terms (original text written for this site) ---------- */
+function legalPage(kicker, title, intro, sections) {
+  return '<div style="max-width:48rem;margin:0 auto">' + head(kicker, title, intro) +
+    '<div style="display:grid;gap:20px;line-height:1.7">' +
+    sections.map(function (s) {
+      return '<section><h2 class="font-display" style="font-size:1.25rem">' + esc(s[0]) + '</h2><p style="margin-top:6px">' + esc(s[1]) + '</p></section>';
+    }).join('') + '</div>' +
+    '<p class="dim small" style="margin-top:24px">Last updated: November 2026.</p>' +
+    '<div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:12px"><button type="button" class="btn-primary" data-go="contact">Contact us</button><button type="button" class="btn-ghost" data-go="home">Back to home</button></div></div>';
+}
+function privacyView() {
+  return legalPage('Privacy Policy', 'Your privacy on VU Help Desk', 'This is an independent, student-made help site. It is not affiliated with Virtual University, and it never connects to VULMS.', [
+    ['What we save', 'Only what you add yourself: your account details (name, email, role and program), and the things you create on the site — notes, study routines, degree courses, GDB drafts, datesheet entries, solved papers, deadlines, reviews, stories and questions. On this website your data is saved in your own browser (localStorage), on your own device. It is not sent to any server and not shared with anyone.'],
+    ['Your account', 'A VU Help Desk account is an account for this site only. It is created with a name, email and password, and the password is stored as a simple hash in this browser, never as plain text. It is not a VULMS account and it cannot open VULMS.'],
+    ['What we never ask for', 'We never ask for your VULMS student ID or password, your VU fee details, or anyone else\u2019s personal information. Never type a VULMS password into this site — or into any site that is not vulms.vu.edu.pk.'],
+    ['Deleting your data', 'Because your data lives in your browser, clearing this site\u2019s browser data (or logging out and removing it) removes it. If you use the site on a shared computer, log out when you finish.'],
+    ['Questions', 'If you have a privacy question or want something you posted removed, send a message through the Contact Us page and the admin team will help.']
+  ]);
+}
+function disclaimerView() {
+  return legalPage('Disclaimer', 'Please read before you rely on this site', 'Everything here is a study aid written to help students. It is not official Virtual University material.', [
+    ['Not official VU material', 'VU Help Desk is an independent student project and is not affiliated with, endorsed by, or connected to Virtual University. The quiz questions, study guides, key points and sample answers on this site are written for practice. They are not VU handouts, not past papers from the university, and not a promise of what will appear in your exam.'],
+    ['Always verify the important things', 'Dates, deadlines, fees, grading rules, exam centres and results change. Always confirm time-sensitive details on VULMS (vulms.vu.edu.pk) or the official VU website (vu.edu.pk) before you act on them. If this site and VULMS disagree, VULMS is right.'],
+    ['CGPA and grade maths', 'The CGPA, pass/fail and final-marks tools use the standard VU grade scale and the published 20% / 20% / 40% passing rules. VU applies relative grading, so treat every result as a guide, not a guarantee of your final grade.'],
+    ['Exam centres', 'Exam-centre addresses can change, and some addresses on this site are still marked as needing confirmation. Always verify your centre on the official VU campus list before travelling on exam day.'],
+    ['Your responsibility', 'Use the site\u2019s guidance in your own words. Copying answers into assignments or GDBs can cost you marks — the tools here are designed to help you write your own work.']
+  ]);
+}
+function termsView() {
+  return legalPage('Terms & Conditions', 'The rules for using VU Help Desk', 'By using this site you agree to these simple terms. They exist so the site stays useful and honest for every VU student.', [
+    ['Use it for study', 'This site is a free study-help tool for Virtual University students. Use the tools, save your notes, plan your semester and help other students — that is what it is for.'],
+    ['Post only your own words', 'Reviews, stories, questions, answers, notes and GDB drafts must be your own work. Do not post copied assignments or GDB answers, bought "solved" packs, or anyone else\u2019s work. Do not post fake reviews, fake stories, or personal information about other people.'],
+    ['Be respectful', 'No abusive language, no spam, and no content that harasses another student or teacher. The admin team may remove content that breaks these rules, and may remove accounts that keep breaking them.'],
+    ['No VULMS passwords, ever', 'Do not share your VULMS password — or anyone else\u2019s — on this site. This site never needs it, and anyone asking for it here is not part of the site.'],
+    ['Content is provided as-is', 'Guides, quizzes, calculators and community posts are provided as study help, without any guarantee that they are complete or up to date. The site may change, and tools may be added or removed.'],
+    ['Changes to these terms', 'If these terms change, the updated version will appear on this page. Continued use of the site after a change means you accept the new terms.']
+  ]);
+}
 
 /* ---------- Dashboards ---------- */
 function dashboardView() {
@@ -1618,6 +1664,13 @@ subjectView.onMount = function () {
 (function wireHeaderSearch() {
   var input = $('siteSearch'), box = $('searchResults');
   if (!input || !box) return;
+  var lastResults = [];
+  function openResult(r) {
+    if (r.subject) UI.subjectCode = r.subject;
+    if (r.faq != null) { UI.faqQ = ''; UI.faqCat = 'All'; UI.faqOpen = r.faq; }
+    if (r.centre) UI.centreSel = r.centre;
+    close(); input.value = ''; lastResults = []; go(r.go);
+  }
   function close() { box.hidden = true; box.innerHTML = ''; }
   input.addEventListener('input', function () {
     var q = input.value.trim().toLowerCase();
@@ -1635,22 +1688,20 @@ subjectView.onMount = function () {
     D.CENTRES.forEach(function (c) {
       if (results.length < 8 && (c.city + ' ' + c.campus).toLowerCase().indexOf(q) !== -1) results.push({ label: c.city + ' — ' + c.campus, sub: 'Exam centre · ' + c.address, go: 'centres', centre: c.id });
     });
-    if (!results.length) { box.innerHTML = '<button type="button" disabled><b>No matches</b><span>Try “fee”, “GDB”, “Lahore” or “CGPA”.</span></button>'; box.hidden = false; return; }
-    box.innerHTML = results.slice(0, 8).map(function (r, i) {
+    if (!results.length) { lastResults = []; box.innerHTML = '<button type="button" disabled><b>No matches</b><span>Try “fee”, “GDB”, “Lahore” or “CGPA”.</span></button>'; box.hidden = false; return; }
+    lastResults = results.slice(0, 8);
+    box.innerHTML = lastResults.map(function (r, i) {
       return '<button type="button" data-sr="' + i + '"><b>' + esc(r.label) + '</b><span>' + esc(r.sub) + '</span></button>';
     }).join('');
     box.hidden = false;
     box.querySelectorAll('[data-sr]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        var r = results[+b.getAttribute('data-sr')];
-        if (r.subject) UI.subjectCode = r.subject;
-        if (r.faq != null) { UI.faqQ = ''; UI.faqCat = 'All'; UI.faqOpen = r.faq; }
-        if (r.centre) UI.centreSel = r.centre;
-        close(); input.value = ''; go(r.go);
-      });
+      b.addEventListener('click', function () { openResult(lastResults[+b.getAttribute('data-sr')]); });
     });
   });
-  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+    if (e.key === 'Enter' && lastResults.length) { e.preventDefault(); openResult(lastResults[0]); }
+  });
   document.addEventListener('click', function (e) { if (!e.target.closest('.header-search')) close(); });
 })();
 
@@ -1661,7 +1712,8 @@ var VIEWS_FN = {
   routine: routineView, degree: degreeView, centres: centresView, guide: guideView,
   reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView, papers: papersView, subject: subjectView,
   assignments: assignmentsView,
-  cgpa: cgpaView, stories: storiesView, health: healthView, ask: askView
+  cgpa: cgpaView, stories: storiesView, health: healthView, ask: askView,
+  privacy: privacyView, disclaimer: disclaimerView, terms: termsView
 };
 render();
 })();

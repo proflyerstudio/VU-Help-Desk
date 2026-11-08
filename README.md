@@ -12,11 +12,12 @@ repository, with no server and no database.
 
 ## What's inside
 
-- **23 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
+- **26 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
   Teacher Dashboard, Admin Dashboard, Admin Panel, FAQ Top 50, Notes
   & Handouts, Study Planner, Degree Progress, Exam Centers, Freshman Guide,
   Course Reviews, GDB Drafter, Datesheet Scheduler, Quiz Practice, Past
-  Papers Guide, Subject Hub, Assignments & GDB Guide, CGPA Planner, Stories, Health Desk, Ask the Community.
+  Papers Guide, Subject Hub, Assignments & GDB Guide, CGPA Planner, Stories, Health Desk, Ask the Community,
+  Privacy Policy, Disclaimer, Terms &amp; Conditions.
 - **All 16 tools work client-side** (the original 13 plus Ask the Community,
   the Past Papers & Handouts Guide and the Assignments & GDB Guide), plus a Subject Hub: type a subject
   code (e.g. CS101) on the home page and get that subject's key points, important topics, midterm/final
@@ -69,7 +70,7 @@ No build step, no dependencies, no environment variables.
 | `index.html` | App shell: branded header (logo, search, theme toggle, login), sidebar + mobile menu, bottom quick-nav |
 | `assets/css/style.css` | Full theme + responsive layout (emerald/amber/ink, light/dark) |
 | `assets/js/data.js` | Reference content: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 46-question quiz bank, 6 subject guides with midterm/final splits |
-| `assets/js/app.js` | The whole app: routing, all 23 views, all tools, localStorage persistence, accounts, admin moderation |
+| `assets/js/app.js` | The whole app: routing, all 26 views, all tools, localStorage persistence, accounts, admin moderation |
 | `vercel.json` | Static-hosting config for Vercel |
 
 ## Honesty notes
