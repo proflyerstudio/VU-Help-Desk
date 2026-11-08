@@ -25,6 +25,7 @@ p{margin:0}
 a{color:var(--accent)}
 button{font-family:inherit;cursor:pointer}
 img{max-width:100%;display:block}
+html,body{overflow-x:hidden}
 .font-display{font-family:Fraunces,Georgia,"Times New Roman",serif}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
 @media(min-width:640px){.wrap{padding:0 24px}}
@@ -46,7 +47,7 @@ aside.side{display:none}
   header.top{padding-left:248px}
   .topbar .brand{display:none}
   .layout{display:block;margin-left:248px;max-width:none;padding:0 32px}
-  main{max-width:1020px;margin:0 auto}
+  main{max-width:1120px;margin:0 auto}
 }
 main{flex:1;min-width:0;padding:28px 0 110px}
 @media(min-width:1024px){main{padding:36px 0 48px}}
@@ -166,6 +167,11 @@ footer.site ul{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size
 footer.site ul a{color:var(--text);text-decoration:none;font-weight:600}
 footer.site ul a:hover{color:var(--accent);text-decoration:underline}
 /* header search on small screens: full-width second row so phones get search too */
+@media(max-width:1023px){
+  /* fixed bottom nav is ~64px tall: keep page content clear of it */
+  main{padding-bottom:96px}
+  footer.site{margin-bottom:80px}
+}
 @media(max-width:899px){
   .topbar{flex-wrap:wrap}
   .header-search{display:block;order:10;flex:1 1 100%;max-width:none}

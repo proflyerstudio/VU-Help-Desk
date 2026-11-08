@@ -34,7 +34,12 @@ repository, with no server and no database.
   eye timer, focus/break timer, desk stretch).
 - **Separate dashboards** for Student, Teacher and Admin, plus a separate
   **Admin Panel** (contact inbox; approve / reject / delete course reviews,
-  stories, questions and centre reviews).
+  stories, questions and centre reviews; approve / reject Teacher requests).
+- **Roles are earned, not picked:** every new account starts as a Student;
+  the first account created while the site has no Admin becomes the Admin
+  (site owner). A Student can request Teacher access from their dashboard
+  and the Admin approves or rejects it in the Admin Panel. Nobody can open
+  the Admin Panel without signing in as the admin account.
 - **Friendly emerald / amber / ink theme**, light & dark mode, fully
   responsive on phone, tablet and desktop, with a clean typographic
   logo.

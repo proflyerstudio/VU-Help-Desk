@@ -52,8 +52,17 @@ var store = {
   guideDone: function () { return load('guideDone', []); },
   quizAttempts: function () { return load('quizAttempts', []); },
   papers: function () { return load('papers', []); },
-  deadlines: function () { return load('deadlines', []); }
+  deadlines: function () { return load('deadlines', []); },
+  teacherRequests: function () { return load('teacherRequests', []); }
 };
+/* Keep the signed-in profile's role in step with the account record, so an
+   Admin approval of a Teacher request takes effect without re-login. */
+function syncProfileRole() {
+  var p = store.profile(); if (!p || !p.accountId) return;
+  var acc = null;
+  store.accounts().forEach(function (a) { if (a.id === p.accountId) acc = a; });
+  if (acc && acc.role && acc.role !== p.role) { p.role = acc.role; save('profile', p); }
+}
 function counts() {
   return {
     notes: store.notes().length, degreeCourses: store.degreeCourses().length,
@@ -207,6 +216,7 @@ function renderShell() {
 }
 function render() {
   stopTimers();
+  syncProfileRole();
   view = currentView();
   renderShell();
   var fn = VIEWS_FN[view] || VIEWS_FN.home;
@@ -332,11 +342,8 @@ function loginView() {
     (isSignup ? '<div><label class="field-label" for="login-name">Your name</label><input id="login-name" class="field" value="' + esc(u.name) + '" placeholder="e.g. Ayesha Khan" required></div>' : '') +
     '<div><label class="field-label" for="login-email">Email</label><input id="login-email" type="email" class="field" value="' + esc(u.email) + '" placeholder="you@example.com" required></div>' +
     '<div><label class="field-label" for="login-password">Password' + (isSignup ? ' (at least 6 characters)' : '') + '</label><input id="login-password" type="password" class="field" value="' + esc(u.password) + '" placeholder="••••••••" autocomplete="' + (isSignup ? 'new-password' : 'current-password') + '" required></div>' +
-    (isSignup ? '<div><span class="field-label">I am a…</span><div class="grid g3" style="gap:8px" role="radiogroup" aria-label="Role">' +
-    [['student', 'Student', 'Learn & track'], ['teacher', 'Teacher', 'Guide & answer'], ['admin', 'Admin', 'Manage site']].map(function (r) {
-      return '<button type="button" role="radio" aria-checked="' + (u.role === r[0]) + '" data-role="' + r[0] + '" style="border-radius:16px;border:2px solid ' + (u.role === r[0] ? 'var(--accent)' : 'var(--border)') + ';background:' + (u.role === r[0] ? 'var(--accent-soft)' : 'var(--surface)') + ';padding:12px;text-align:center;color:var(--text)"><span style="display:block;font-weight:700">' + r[1] + '</span><span class="dim small">' + r[2] + '</span></button>';
-    }).join('') + '</div></div>' : '') +
-    (isSignup && u.role === 'student' ? '<div><label class="field-label" for="login-program">Study program</label><select id="login-program" class="field">' + D.PROGRAMS.map(function (pr) { return '<option' + (u.program === pr ? ' selected' : '') + '>' + esc(pr) + '</option>'; }).join('') + '</select></div>' : '') +
+    (isSignup ? '<p class="dim small" style="background:var(--surface-2);border-radius:12px;padding:12px 16px">Every new account starts as a <strong>Student</strong>. The first account created on this site becomes the <strong>Admin</strong> (the site owner) — nobody can pick the Admin or Teacher role here. Teachers are approved by the Admin from a request on their dashboard.</p>' : '') +
+    (isSignup ? '<div><label class="field-label" for="login-program">Study program</label><select id="login-program" class="field">' + D.PROGRAMS.map(function (pr) { return '<option' + (u.program === pr ? ' selected' : '') + '>' + esc(pr) + '</option>'; }).join('') + '</select></div>' : '') +
     (u.error ? '<div class="note-bad" role="alert">' + esc(u.error) + '</div>' : '') +
     (u.ok ? '<div class="note-ok" role="status">' + esc(u.ok) + '</div>' : '') +
     '<button type="submit" class="btn-primary" style="width:100%">' + (isSignup ? 'Create my account & open dashboard' : 'Log in & open my dashboard') + '</button>' +
@@ -356,9 +363,6 @@ loginView.onMount = function () {
   document.querySelectorAll('[data-loginmode]').forEach(function (b) {
     b.addEventListener('click', function () { sync(); UI.login.mode = b.getAttribute('data-loginmode'); UI.login.error = ''; render(); });
   });
-  f.querySelectorAll('[data-role]').forEach(function (b) {
-    b.addEventListener('click', function () { sync(); UI.login.role = b.getAttribute('data-role'); render(); });
-  });
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     sync();
@@ -369,7 +373,12 @@ loginView.onMount = function () {
     if (u.mode === 'signup') {
       if (!u.name.trim()) { u.error = 'Please enter your name.'; render(); return; }
       if (accounts.some(function (a) { return a.email === email; })) { u.error = 'An account with this email already exists — switch to Login instead.'; render(); return; }
-      var acc = { id: uid(), name: u.name.trim(), email: email, passHash: pwHash(u.password), role: u.role, program: u.role === 'student' ? u.program : '', createdAt: new Date().toISOString() };
+      /* Roles are never picked on Sign Up: every new account is a Student,
+         except the first account while the site has no Admin yet — that
+         account becomes the Admin (the site owner). */
+      var hasAdmin = accounts.some(function (a) { return a.role === 'admin'; });
+      var role = hasAdmin ? 'student' : 'admin';
+      var acc = { id: uid(), name: u.name.trim(), email: email, passHash: pwHash(u.password), role: role, program: u.program, createdAt: new Date().toISOString() };
       accounts.push(acc); store.saveAccounts(accounts);
       UI.login.password = ''; UI.login.error = ''; UI.login.ok = '';
       store.setProfile({ accountId: acc.id, name: acc.name, email: acc.email, role: acc.role, program: acc.program });
@@ -450,6 +459,36 @@ function termsView() {
 }
 
 /* ---------- Dashboards ---------- */
+/* Teacher access is earned, not picked: a Student asks the Admin from their
+   dashboard; the Admin approves or rejects it in the Admin Panel. */
+function teacherRequestHtml(p) {
+  var reqs = store.teacherRequests().filter(function (r) { return r.accountId === p.accountId; });
+  var pending = reqs.filter(function (r) { return r.status === 'pending'; })[0];
+  var rejected = reqs.filter(function (r) { return r.status === 'rejected'; })[0];
+  if (pending) {
+    return '<div class="card mt" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Teacher access — request pending</h2>' +
+      '<p class="dim" style="margin-top:8px">Your request is with the Admin: “' + esc(pending.reason) + '” — sent ' + fmtDate(pending.createdAt) + '. You will see the teacher dashboard here once it is approved.</p></div>';
+  }
+  return '<div class="card mt" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Become a Teacher on this site</h2>' +
+    '<p class="dim" style="margin-top:8px">Teachers answer community questions and guide juniors. Tell the Admin why you should have teacher access — they approve or reject it in the Admin Panel.</p>' +
+    (rejected ? '<p class="note-warn mt" role="note">Your last request was not approved. You can send a new one with more detail.</p>' : '') +
+    '<form id="teacherReqForm" style="margin-top:16px;display:grid;gap:12px"><label class="field-label" for="teacherReqReason">Why should you be a Teacher here?</label>' +
+    '<textarea id="teacherReqReason" class="field" required placeholder="e.g. I am a senior BS CS student and I answer questions in our study group every week…"></textarea>' +
+    '<div id="teacherReqMsg"></div><button type="submit" class="btn-primary" style="justify-self:start">Request Teacher access</button></form></div>';
+}
+dashboardView.onMount = function () {
+  var f = $('teacherReqForm'); if (!f) return;
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var p = store.profile(); if (!p) return;
+    var reason = $('teacherReqReason').value.trim(); if (!reason) return;
+    var reqs = store.teacherRequests();
+    if (reqs.some(function (r) { return r.accountId === p.accountId && r.status === 'pending'; })) { render(); return; }
+    reqs.unshift({ id: uid(), accountId: p.accountId, name: p.name, email: p.email, reason: reason, status: 'pending', createdAt: new Date().toISOString() });
+    save('teacherRequests', reqs);
+    render();
+  });
+};
 function dashboardView() {
   var p = store.profile();
   if (!p) return '<div style="max-width:36rem;margin:0 auto">' + empty('Create your account to see your dashboard', 'Your dashboard pulls together your degree progress, saved notes, planned exams and community activity. It takes ten seconds to set up.', '<button type="button" class="btn-primary" data-go="login">Create my account</button>') + '</div>';
@@ -475,7 +514,8 @@ function dashboardView() {
       '<button type="button" class="btn-primary mt" data-go="datesheet">Open Datesheet Scheduler</button></div>' +
       '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Quick actions</h2><div class="grid g2 mt" style="gap:8px">' +
       [['notes', 'Add a note'], ['gdb', 'Draft a GDB'], ['routine', 'Plan my week'], ['cgpa', 'Check CGPA target'], ['quiz', 'Practice a quiz'], ['ask', 'Ask a question']].map(function (x) { return '<button type="button" class="btn-ghost" data-go="' + x[0] + '">' + x[1] + '</button>'; }).join('') +
-      '</div><p class="dim small" style="margin-top:16px">Tip: students who log courses in the Degree Dashboard and plan the week every Sunday rarely miss a deadline.</p></div></div>';
+      '</div><p class="dim small" style="margin-top:16px">Tip: students who log courses in the Degree Dashboard and plan the week every Sunday rarely miss a deadline.</p></div></div>' +
+      teacherRequestHtml(p);
   }
   if (p.role === 'teacher') {
     return headHtml +
@@ -498,18 +538,18 @@ function dashboardView() {
 }
 
 /* ---------- Admin panel ---------- */
-var ADMIN_TABS = [['messages', 'Inbox'], ['reviews', 'Course reviews'], ['stories', 'Stories'], ['questions', 'Questions'], ['centres', 'Centre reviews']];
+var ADMIN_TABS = [['messages', 'Inbox'], ['reviews', 'Course reviews'], ['stories', 'Stories'], ['questions', 'Questions'], ['centres', 'Centre reviews'], ['teachers', 'Teacher requests']];
 function adminView() {
   var p = store.profile();
   if (!p || p.role !== 'admin') {
-    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is for the site admin role. Sign up with the Admin role to manage messages and moderate community content.', '<span class="chip chip-amber">Tip: Sign Up → choose “Admin”</span>') + '</div>';
+    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is only for the site owner — the first account created on this site. Sign in with the admin account to manage messages and moderate community content.', '<button type="button" class="btn-primary" data-go="login">Sign in with the admin account</button>') + '</div>';
   }
   UI.adminTab = UI.adminTab || 'messages';
   var c = counts();
   var tab = UI.adminTab;
   var tabsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px" role="tablist" aria-label="Admin sections">' +
     ADMIN_TABS.map(function (t) {
-      var n = { messages: c.messages, reviews: c.reviews, stories: c.stories, questions: c.questions, centres: c.centreReviews }[t[0]];
+      var n = { messages: c.messages, reviews: c.reviews, stories: c.stories, questions: c.questions, centres: c.centreReviews, teachers: store.teacherRequests().filter(function (r) { return r.status === 'pending'; }).length }[t[0]];
       return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" class="btn-ghost" data-admintab="' + t[0] + '"' +
         (tab === t[0] ? ' style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent)"' : '') + '>' + t[1] + ' (' + n + ')</button>';
     }).join('') + '</div>';
@@ -538,6 +578,17 @@ function adminView() {
     var qs = store.questions();
     body = qs.length === 0 ? empty('No questions yet', 'Community questions will appear here with their answers.')
       : qs.map(function (q) { return '<article class="card mb" style="padding:20px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><p><b>' + esc(q.title) + '</b></p><span class="chip">' + (q.answers || []).length + ' answer' + ((q.answers || []).length === 1 ? '' : 's') + '</span></div><p class="dim" style="margin-top:8px">' + esc(q.body) + '</p><div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="dim small">by ' + esc(q.author) + ' · ' + esc(q.category) + ' ' + statusChip(q.status) + '</span><span>' + modButtons('questions', q.id, q.status) + '</span></div></article>'; }).join('');
+  } else if (tab === 'teachers') {
+    var reqs = store.teacherRequests();
+    body = reqs.length === 0 ? empty('No teacher requests', 'When a student asks for Teacher access from their dashboard, the request appears here. Approve it and they get the teacher dashboard; reject it and they stay a student.')
+      : reqs.map(function (r) {
+        return '<article class="card mb" style="padding:20px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><p><b>' + esc(r.name) + '</b> <span class="dim">' + esc(r.email) + '</span></p><span class="chip' + (r.status === 'pending' ? ' chip-amber' : '') + '">' + (r.status === 'pending' ? 'Waiting for review' : r.status === 'approved' ? 'Approved — Teacher' : 'Rejected') + '</span></div>' +
+          '<p style="margin-top:8px">“' + esc(r.reason) + '”</p>' +
+          '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="dim small">Requested ' + fmtDateTime(r.createdAt) + '</span><span>' +
+          (r.status === 'pending'
+            ? '<button type="button" class="btn-primary btn-sm" data-approve-teacher="' + r.id + '">Approve as Teacher</button> <button type="button" class="btn-danger" data-reject-teacher="' + r.id + '">Reject</button>'
+            : '') + '</span></div></article>';
+      }).join('');
   } else {
     var crs = store.centreReviews();
     body = crs.length === 0 ? empty('No centre reviews', 'Exam-centre reviews from the Navigator will appear here.')
@@ -565,6 +616,21 @@ adminView.onMount = function () {
   });
   document.querySelectorAll('[data-del]').forEach(function (b) {
     b.addEventListener('click', function () { var p = b.getAttribute('data-del').split(':'); del(p[0], p[1]); });
+  });
+  function setTeacherRequest(id, approve) {
+    var reqs = store.teacherRequests(), accounts = store.accounts(), changed = null;
+    reqs.forEach(function (r) { if (String(r.id) === id) { r.status = approve ? 'approved' : 'rejected'; changed = r; } });
+    if (approve && changed) {
+      accounts.forEach(function (a) { if (a.id === changed.accountId) a.role = 'teacher'; });
+      store.saveAccounts(accounts);
+    }
+    save('teacherRequests', reqs); render();
+  }
+  document.querySelectorAll('[data-approve-teacher]').forEach(function (b) {
+    b.addEventListener('click', function () { setTeacherRequest(b.getAttribute('data-approve-teacher'), true); });
+  });
+  document.querySelectorAll('[data-reject-teacher]').forEach(function (b) {
+    b.addEventListener('click', function () { setTeacherRequest(b.getAttribute('data-reject-teacher'), false); });
   });
 };
 function visible(arr) { return (arr || []).filter(function (x) { return x.status !== 'rejected'; }); }
