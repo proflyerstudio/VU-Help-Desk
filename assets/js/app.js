@@ -24,6 +24,12 @@ function fmtDateTime(iso) {
   if (isNaN(d.getTime())) return iso || '';
   return d.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
 }
+/* Date-only string in LOCAL time (yyyy-mm-dd). Never use toISOString() for
+   calendar dates: it converts to UTC and shifts the day back in PKT. */
+function isoDay(d) {
+  var y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), dd = ('0' + d.getDate()).slice(-2);
+  return y + '-' + m + '-' + dd;
+}
 function load(key, fallback) {
   try { var v = localStorage.getItem('vuhelp.v1.' + key); return v ? JSON.parse(v) : fallback; }
   catch (e) { return fallback; }
@@ -495,7 +501,7 @@ function dashboardView() {
   var c = counts(), ds = degreeStats();
   var qs = store.questions();
   var unanswered = qs.filter(function (q) { return !(q.answers && q.answers.length); });
-  var today = new Date().toISOString().slice(0, 10);
+  var today = isoDay(new Date());
   var upcoming = store.datesheet().filter(function (i) { return i.examDate >= today; }).sort(function (a, b) { return a.examDate < b.examDate ? -1 : 1; }).slice(0, 3);
   var headHtml = head(p.role + ' dashboard', 'Assalam-o-Alaikum, ' + p.name.split(' ')[0] + '!',
     p.role === 'student' ? 'Here\u2019s your ' + (p.program || 'degree') + ' journey at a glance.'
@@ -1154,11 +1160,11 @@ gdbView.onMount = function () {
 /* ---------- Datesheet scheduler ---------- */
 var DS_SESSIONS = ['Morning', 'Evening'];
 function datesheetView() {
-  UI.dsStart = UI.dsStart || (function () { var d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10); })();
+  UI.dsStart = UI.dsStart || (function () { var d = new Date(); d.setDate(d.getDate() + 7); return isoDay(d); })();
   var list = store.datesheet();
   var days = [];
   var base = new Date(UI.dsStart + 'T00:00:00');
-  if (!isNaN(base.getTime())) for (var i = 0; i < 14; i++) { var d = new Date(base); d.setDate(base.getDate() + i); days.push(d.toISOString().slice(0, 10)); }
+  if (!isNaN(base.getTime())) for (var i = 0; i < 14; i++) { var d = new Date(base); d.setDate(base.getDate() + i); days.push(isoDay(d)); }
   function dayLoad(date) { return list.filter(function (x) { return x.examDate === date; }).length; }
   var clash = list.some(function (x) { return list.some(function (y) { return y.id !== x.id && y.examDate === x.examDate && y.session === x.session; }); });
   var heavyDays = days.filter(function (d) { return dayLoad(d) >= 2; });
@@ -1198,7 +1204,7 @@ datesheetView.onMount = function () {
     var code = $('ds-code').value.trim().toUpperCase(); if (!code) return;
     var arr = store.datesheet();
     var base = new Date(UI.dsStart + 'T00:00:00');
-    var first = isNaN(base.getTime()) ? UI.dsStart : base.toISOString().slice(0, 10);
+    var first = isNaN(base.getTime()) ? UI.dsStart : isoDay(base);
     arr.push({ id: uid(), courseCode: code, courseName: $('ds-name').value.trim(), examDate: first, session: 'Morning', createdAt: new Date().toISOString() });
     save('datesheet', arr);
     $('dsMsg').innerHTML = '<div class="note-ok" role="status">Subject added to the first day — drag it to your ideal slot.</div>';
