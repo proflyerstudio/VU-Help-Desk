@@ -30,8 +30,12 @@ img{max-width:100%;display:block}
 @media(min-width:640px){.wrap{padding:0 24px}}
 /* header */
 header.top{position:sticky;top:0;z-index:40;border-bottom:2px solid var(--border);background:var(--surface)}
-.topbar{display:flex;align-items:center;gap:10px;padding:12px 0}
-.topbar .title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.15rem;font-weight:700}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 0}
+.topnav{display:none;align-items:center;gap:2px}
+@media(min-width:1024px){.topnav{display:flex}}
+.topnav button{border:0;background:transparent;border-radius:999px;padding:10px 14px;font-weight:700;font-size:.95rem;color:var(--text)}
+.topnav button:hover{background:var(--accent-soft)}
+.topnav button.active{background:var(--accent);color:var(--accent-ink)}
 .layout{display:flex;gap:32px;align-items:flex-start}
 aside.side{display:none;width:256px;flex-shrink:0;padding:32px 0;position:sticky;top:76px}
 @media(min-width:1024px){aside.side{display:block}}
@@ -115,7 +119,7 @@ pre,code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .brand-text{display:flex;flex-direction:column;line-height:1.15}
 .brand-text b{font-family:Fraunces,Georgia,serif;font-size:1.15rem}
 .brand-text small{color:var(--dim);font-size:.72rem;font-weight:600}
-.header-search{position:relative;flex:1;max-width:340px;display:none}
+.header-search{position:relative;flex:1;max-width:420px;display:none}
 @media(min-width:900px){.header-search{display:block}}
 .header-search input{width:100%;min-height:44px;padding:.55rem 1rem .55rem 2.4rem;border-radius:999px;border:2px solid var(--border);background:var(--surface-2);color:var(--text);font-size:.95rem;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235d6d75' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
 .header-search input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
@@ -134,6 +138,7 @@ pre,code{font-family:ui-monospace,Menlo,Consolas,monospace}
 .mascot p{margin-top:4px;font-size:.95rem}
 footer.site .cols{display:grid;gap:24px}
 @media(min-width:768px){footer.site .cols{grid-template-columns:1.4fr 1fr 1fr}}
+footer.site .foot-bottom{margin-top:24px;border-top:2px solid var(--border);padding-top:16px;display:flex;flex-wrap:wrap;gap:4px 24px;justify-content:space-between;font-size:.85rem;font-weight:600;color:var(--dim)}
 footer.site h3{font-family:Fraunces,Georgia,serif;font-size:1.05rem;margin-bottom:10px}
 footer.site ul{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:.9rem}
 footer.site ul a{color:var(--text);text-decoration:none;font-weight:600}
@@ -142,4 +147,13 @@ footer.site ul a:hover{color:var(--accent);text-decoration:underline}
 @media(max-width:899px){
   .topbar{flex-wrap:wrap}
   .header-search{display:block;order:10;flex:1 1 100%;max-width:none}
+}
+/* compact header on small phones: icon-only Menu/Theme buttons, no brand tagline */
+@media(max-width:640px){
+  .topbar{gap:8px}
+  .brand-text small{display:none}
+  .brand-mascot{width:36px;height:36px;font-size:1.35rem}
+  .brand-text b{font-size:1.05rem}
+  .menu-label,.theme-label{display:none}
+  #menuBtn,#themeBtn{padding-left:.7rem;padding-right:.7rem}
 }

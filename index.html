@@ -19,15 +19,21 @@
 <body>
 <header class="top">
   <div class="wrap topbar">
-    <button type="button" class="btn-ghost btn-sm menu-btn" id="menuBtn" aria-expanded="false" aria-label="Toggle navigation menu">☰ Menu</button>
+    <button type="button" class="btn-ghost btn-sm menu-btn" id="menuBtn" aria-expanded="false" aria-label="Toggle navigation menu"><span aria-hidden="true">☰</span><span class="menu-label"> Menu</span></button>
     <a href="#/home" class="brand" aria-label="VU Help Desk — home"><span class="brand-mascot" aria-hidden="true">🦉</span><span class="brand-text"><b>VU Help Desk</b><small>Every VU problem, one friendly home</small></span></a>
+    <nav class="topnav" aria-label="Top navigation">
+      <button type="button" data-go="home" data-nav="home">Home</button>
+      <button type="button" data-go="subject" data-nav="subject">Subjects</button>
+      <button type="button" data-go="home" data-nav="tools">Tools</button>
+      <button type="button" data-go="faq" data-nav="faq">FAQ</button>
+      <button type="button" data-go="centres" data-nav="centres">Exam Centres</button>
+    </nav>
     <div class="header-search" role="search">
       <label class="sr-only" for="siteSearch">Search the site</label>
       <input id="siteSearch" type="search" placeholder="Apna subject code likhein — jaise CS101…" autocomplete="off">
       <div class="search-results" id="searchResults" hidden></div>
     </div>
-    <p class="title font-display" id="pageTitle">Home</p>
-    <button type="button" class="btn-ghost btn-sm" id="themeBtn" aria-label="Switch light or dark mode">◐ Theme</button>
+    <button type="button" class="btn-ghost btn-sm" id="themeBtn" aria-label="Switch light or dark mode"><span aria-hidden="true">◐</span><span class="theme-label"> Theme</span></button>
     <span id="profileBtn"></span>
   </div>
   <div class="mobile-menu" id="mobileMenu" hidden></div>

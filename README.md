@@ -12,23 +12,24 @@ repository, with no server and no database.
 
 ## What's inside
 
-- **22 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
+- **23 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
   Teacher Dashboard, Admin Dashboard, Admin Panel, FAQ Top 50, Notes
   & Handouts, Study Planner, Degree Progress, Exam Centers, Freshman Guide,
   Course Reviews, GDB Drafter, Datesheet Scheduler, Quiz Practice, Past
-  Papers Guide, Subject Hub, CGPA Planner, Stories, Health Desk, Ask the Community.
-- **All 15 tools work client-side** (the original 13 plus Ask the Community
-  and the Past Papers & Handouts Guide), plus a Subject Hub: type a subject
-  code (e.g. CS101) on the home page and get that subject's key points, quiz
-  questions, your notes and solved papers in one place. Searchable FAQ (all
+  Papers Guide, Subject Hub, Assignments & GDB Guide, CGPA Planner, Stories, Health Desk, Ask the Community.
+- **All 16 tools work client-side** (the original 13 plus Ask the Community,
+  the Past Papers & Handouts Guide and the Assignments & GDB Guide), plus a Subject Hub: type a subject
+  code (e.g. CS101) on the home page and get that subject's key points, important topics, midterm/final
+  lecture split and study method, quiz questions, your notes and solved papers in one place. Searchable FAQ (all
   50 questions),
   notes by course/lecture, study planner, degree progress with real
   CGPA maths on the VU grade scale, exam centre navigator, freshman guide
   with saved progress, course reviews with difficulty scores, GDB drafter
   with live character/word counts, datesheet scheduler (14-day window) with
-  clash detection, timed quiz practice (34-question bank), past-papers guide
-  with a solved-paper tracker, CGPA target planner (can import your Degree
-  Dashboard data), stories, and the health desk (posture check, 20-20-20
+  clash detection, timed quiz practice (46-question bank), past-papers guide
+  with a solved-paper tracker, assignments & GDB guide with a personal
+  deadline tracker, CGPA target planner (can import your Degree
+  Dashboard data, plus a pass/fail checker and final-marks predictor), stories, and the health desk (posture check, 20-20-20
   eye timer, focus/break timer, desk stretch).
 - **Separate dashboards** for Student, Teacher and Admin, plus a separate
   **Admin Panel** (contact inbox; approve / reject / delete course reviews,
@@ -67,8 +68,8 @@ No build step, no dependencies, no environment variables.
 | --- | --- |
 | `index.html` | App shell: branded header (logo, search, theme toggle, login), sidebar + mobile menu, bottom quick-nav |
 | `assets/css/style.css` | Full theme + responsive layout (emerald/amber/ink, light/dark) |
-| `assets/js/data.js` | Reference content: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 34-question quiz bank, 6 subject guides |
-| `assets/js/app.js` | The whole app: routing, all 22 views, all tools, localStorage persistence, accounts, admin moderation |
+| `assets/js/data.js` | Reference content: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 46-question quiz bank, 6 subject guides with midterm/final splits |
+| `assets/js/app.js` | The whole app: routing, all 23 views, all tools, localStorage persistence, accounts, admin moderation |
 | `vercel.json` | Static-hosting config for Vercel |
 
 ## Honesty notes

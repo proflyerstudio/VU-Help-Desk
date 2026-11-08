@@ -51,7 +51,8 @@ var store = {
   routines: function () { return load('routines', []); },
   guideDone: function () { return load('guideDone', []); },
   quizAttempts: function () { return load('quizAttempts', []); },
-  papers: function () { return load('papers', []); }
+  papers: function () { return load('papers', []); },
+  deadlines: function () { return load('deadlines', []); }
 };
 function counts() {
   return {
@@ -80,6 +81,7 @@ var VIEWS = {
   centres: 'Exam Centers', guide: 'Freshman Guide', reviews: 'Course Reviews',
   gdb: 'GDB Drafter', datesheet: 'Datesheet Scheduler', quiz: 'Quiz Practice',
   papers: 'Past Papers Guide', subject: 'Subject Hub',
+  assignments: 'Assignments & GDB Guide',
   cgpa: 'CGPA Planner', stories: 'Stories', health: 'Health Desk', ask: 'Ask the Community'
 };
 var TOOLS = [
@@ -97,7 +99,8 @@ var TOOLS = [
   { n: '12', view: 'stories', title: 'Stories & Confessions', blurb: 'Anonymous distance-learning stories: funny, honest, relatable.', solves: 'Feeling alone in online study' },
   { n: '13', view: 'health', title: 'Health Desk', blurb: 'Posture checks, eye breaks and timers for long study hours.', solves: 'Back pain and screen strain' },
   { n: '14', view: 'ask', title: 'Ask the Community', blurb: 'Post a question; students and teachers answer from experience.', solves: 'Problems nobody answers' },
-  { n: '15', view: 'papers', title: 'Past Papers & Handouts Guide', blurb: 'Where the real handouts and past papers live — and a tracker for every paper you solve.', solves: 'Exam prep with no material' }
+  { n: '15', view: 'papers', title: 'Past Papers & Handouts Guide', blurb: 'Where the real handouts and past papers live — and a tracker for every paper you solve.', solves: 'Exam prep with no material' },
+  { n: '16', view: 'assignments', title: 'Assignments & GDB Guide', blurb: 'How VU assignments and GDBs really work — format, marks, deadlines — plus your own deadline tracker.', solves: 'Missed deadlines and zero marks' }
 ];
 var view = 'home';
 var UI = {}; // per-view transient state
@@ -124,17 +127,22 @@ function stars(v, size) {
   return '<span aria-label="' + v + ' out of 5 stars">' + s + '</span>';
 }
 function footerHtml() {
-  var toolLinks = TOOLS.slice(0, 7).map(function (t) { return '<li><a href="#/' + t.view + '">' + esc(t.title) + '</a></li>'; }).join('');
-  var toolLinks2 = TOOLS.slice(7).map(function (t) { return '<li><a href="#/' + t.view + '">' + esc(t.title) + '</a></li>'; }).join('');
+  var quick = [['subject', 'Subject Hub'], ['notes', 'Notes & Handouts'], ['routine', 'Study Planner'],
+    ['quiz', 'Quiz Practice'], ['cgpa', 'CGPA Planner'], ['datesheet', 'Datesheet Scheduler'],
+    ['faq', 'FAQ — Top 50'], ['centres', 'Exam Centres']].map(function (x) {
+      return '<li><a href="#/' + x[0] + '">' + esc(x[1]) + '</a></li>';
+    }).join('');
   return '<footer class="site"><div class="cols">' +
-    '<div><h3>🦉 VU Help Desk</h3><p style="font-size:.9rem;color:var(--dim)">A student help project built for Virtual University students — not an official VU website. Everything on this site is free to read and use, no account needed. Always confirm fees, dates and rules on VULMS and vu.edu.pk.</p>' +
-    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Your account, notes, reviews and drafts are saved in this browser only (localStorage). This site is not affiliated with VU — for VULMS, visit vulms.vu.edu.pk.</p></div>' +
-    '<div><h3>Student tools</h3><ul>' + toolLinks + '</ul></div>' +
-    '<div><h3>More tools & official links</h3><ul>' + toolLinks2 +
+    '<div><h3>🦉 VU Help Desk</h3>' +
+    '<p style="font-size:.9rem;color:var(--dim)">Every VU problem, one friendly home — FAQ, notes, past papers, study planner, CGPA maths and exam help for Virtual University students, free to use with no sign-in wall.</p>' +
+    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Not an official VU website. Always confirm fees, dates and rules on VULMS and vu.edu.pk. Your account and saved work live in this browser.</p></div>' +
+    '<div><h3>Quick links</h3><ul>' + quick + '</ul></div>' +
+    '<div><h3>Official links</h3><ul>' +
     '<li><a href="' + D.VULMS_URL + '" target="_blank" rel="noreferrer">Open VULMS ↗</a></li>' +
     '<li><a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer">Official VU website (vu.edu.pk) ↗</a></li>' +
-    '<li><a href="#/about">About this project</a></li><li><a href="#/contact">Contact us</a></li></ul></div></div>' +
-    '<p style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px">Made with 💚 for VU students · VU Help Desk · Free to use, no sign-in wall.</p></footer>';
+    '<li><a href="#/about">About this project</a></li><li><a href="#/contact">Contact us</a></li></ul>' +
+    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Ye VU Help Desk ka apna account hai. VULMS ke liye vulms.vu.edu.pk par jayein.</p></div></div>' +
+    '<div class="foot-bottom"><span>© 2026 VU Help Desk</span><span>Made for Virtual University students</span></div></footer>';
 }
 function navHtml() {
   var p = store.profile();
@@ -151,7 +159,15 @@ function navHtml() {
   return h;
 }
 function renderShell() {
-  $('pageTitle').textContent = VIEWS[view];
+  var isTool = TOOLS.some(function (t) { return t.view === view; });
+  document.querySelectorAll('.topnav [data-nav]').forEach(function (b) {
+    var n = b.getAttribute('data-nav');
+    var on = (n === 'home' && view === 'home') || (n === 'subject' && view === 'subject') ||
+      (n === 'tools' && isTool && view !== 'home') || (n === 'faq' && view === 'faq') ||
+      (n === 'centres' && view === 'centres');
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   $('sideNav').innerHTML = navHtml();
   $('mobileMenu').innerHTML = navHtml();
   var p = store.profile();
@@ -175,12 +191,14 @@ function render() {
 }
 document.addEventListener('click', function (e) {
   var t = e.target.closest('[data-go]');
-  if (t) { e.preventDefault(); $('mobileMenu').hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); go(t.getAttribute('data-go')); }
+  if (t) { e.preventDefault(); $('mobileMenu').hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); $('menuBtn').innerHTML = '<span aria-hidden="true">☰</span><span class="menu-label"> Menu</span>'; go(t.getAttribute('data-go')); }
 });
 $('menuBtn').addEventListener('click', function () {
   var m = $('mobileMenu'); m.hidden = !m.hidden;
   $('menuBtn').setAttribute('aria-expanded', String(!m.hidden));
-  $('menuBtn').textContent = m.hidden ? '☰ Menu' : '✕ Close';
+  $('menuBtn').innerHTML = m.hidden
+    ? '<span aria-hidden="true">☰</span><span class="menu-label"> Menu</span>'
+    : '<span aria-hidden="true">✕</span><span class="menu-label"> Close</span>';
 });
 $('themeBtn').addEventListener('click', function () {
   var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -215,7 +233,7 @@ function homeView() {
   return '<section class="grid lg2" style="align-items:center;gap:32px"><div>' +
     '<span class="chip chip-amber">Free to use · No sign-in wall</span>' +
     '<h1 class="font-display" style="margin-top:16px;font-size:2.5rem;line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
-    '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 15 working tools in one place. No Facebook-group archaeology required.</p>' +
+    '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 16 working tools in one place. No Facebook-group archaeology required.</p>' +
     '<form id="homeSubjectForm" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" role="search" aria-label="Find a subject"><label class="sr-only" for="homeSubjectInput">Apna subject code likhein</label><input id="homeSubjectInput" class="field" style="flex:1;min-width:220px;font-size:1.05rem" placeholder="Apna subject code likhein — jaise CS101" autocomplete="off"><button type="submit" class="btn-primary">Open subject →</button></form>' +
     '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px" aria-label="Popular subjects">' + ['CS101', 'MTH101', 'ENG101', 'MGT101', 'STA301', 'CS201'].map(function (c) { return '<button type="button" class="chip" data-subject="' + c + '" style="font-weight:700">' + c + '</button>'; }).join('') + '</div>' +
     '<div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px">' +
@@ -223,13 +241,17 @@ function homeView() {
     '<button type="button" class="btn-ghost" data-go="guide">I\u2019m new — show me the guide</button></div>' +
     (p ? '<p style="margin-top:16px;font-size:.9rem;font-weight:600;color:var(--accent)">Welcome back, ' + esc(p.name) + ' (' + esc(p.role) + ')</p>' : '') +
     '</div><div class="card" style="overflow:hidden;padding:0;background:linear-gradient(135deg,var(--accent),var(--amber));display:flex;align-items:center;justify-content:center;min-height:260px"><span style="font-size:7rem" aria-hidden="true">🦉</span></div></section>' +
+    '<section class="mt3"><div class="card" style="padding:24px;background:var(--accent-soft)"><h2 class="font-display" style="font-size:1.25rem">Start here in 2 minutes — no account needed</h2><div class="grid sm2 lg3 mt" style="gap:16px">' +
+    '<div><p class="font-display" style="font-weight:900;font-size:1.5rem;color:var(--accent)">1</p><p style="margin-top:4px"><strong>Search your subject</strong> in the box above — type CS101 and press Enter.</p></div>' +
+    '<div><p class="font-display" style="font-weight:900;font-size:1.5rem;color:var(--accent)">2</p><p style="margin-top:4px"><strong>Open its Subject Hub</strong> — key points, important topics, quiz and your notes, all on one page.</p></div>' +
+    '<div><p class="font-display" style="font-weight:900;font-size:1.5rem;color:var(--accent)">3</p><p style="margin-top:4px"><strong>Try one thing now</strong> — a 30-second quiz, a saved note, or a deadline in the tracker. That is the whole site, in three taps.</p></div></div></div></section>' +
     '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">' + (p ? 'Your semester at a glance' : 'Inside the hub right now') + '</h2>' +
     '<div class="grid sm2 lg4 mt" style="gap:16px">' + glance +
     stat('Notes saved', String(c.notes), 'Organised by course & lecture') +
     stat('Exams planned', String(c.datesheetItems), 'On your test datesheet') +
     stat('Questions answered', String(c.answers), 'By the community so far') + '</div></section>' +
     '<section class="mt3"><div class="mascot"><span class="face" aria-hidden="true">🦉</span><div><h3>Meet Vee, your study buddy</h3><p>Vee the owl lives here to cheer you on — no sign-in, no locked doors. Everything on this page is open: read the FAQ, try a quiz, plan your CGPA. Vee\u2019s tip for today: <b>submit assignments 24 hours early</b> — last-hour uploads are the #1 cause of lost marks.</p></div><button type="button" class="btn-amber" style="flex-shrink:0" data-go="guide">Vee, guide me →</button></div></section>' +
-    '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">Everything, in one index</h2><p class="dim" style="margin-top:4px">15 tools, each built for one real problem. Tap any card to start.</p>' +
+    '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">Everything, in one index</h2><p class="dim" style="margin-top:4px">16 tools, each built for one real problem. Tap any card to start.</p>' +
     '<div class="grid sm2 lg3 mt" style="gap:16px">' + cards + '</div></section>' +
     '<section class="mt3 grid lg3" style="gap:16px">' +
     [['1 · Create your account', 'Sign up in seconds — name, email and password — and your notes, routine and degree stay saved in this browser, on your own dashboard.'],
@@ -1205,6 +1227,58 @@ papersView.onMount = function () {
   });
 };
 
+/* ---------- Assignments & GDB guide + deadlines tracker ---------- */
+function assignmentsView() {
+  var list = store.deadlines().slice().sort(function (a, b) { return (a.dueDate || '').localeCompare(b.dueDate || ''); });
+  function daysLeft(d) {
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var due = new Date(d + 'T00:00:00');
+    if (isNaN(due.getTime())) return null;
+    return Math.round((due.getTime() - now.getTime()) / 86400000);
+  }
+  return head('Tool 16 · Deadlines', 'Assignments & GDB Guide', 'The problem: VU never extends a deadline — the upload link simply closes. This page explains exactly how assignments and GDBs work, what they are worth, and keeps every deadline you enter in one sorted list so nothing sneaks up on you.') +
+    '<div class="grid lg-side2" style="gap:24px"><div style="display:grid;gap:16px;align-content:start">' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">1 · How a VU assignment works</h2><ul style="margin-top:8px;list-style:disc;padding-left:24px;display:grid;gap:6px;line-height:1.6"><li>Assignments appear on your course page on VULMS — usually one per course in each half of the semester, with a fixed due date and time.</li><li>You upload <strong>one file</strong> in the exact format the page asks for (usually .doc/.docx or PDF; sometimes a .zip for programming tasks).</li><li>The link <strong>closes at the deadline</strong> — late uploads are not accepted. Submit at least 24 hours early: last-hour server rush and load-shedding are the most common reasons students lose these marks.</li><li>After uploading, <strong>re-download your own file</strong> from VULMS and open it. A wrong format or corrupt file means zero marks.</li><li>If the deadline has not passed, most courses let you upload again — the latest file replaces the old one.</li></ul></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">2 · How a GDB works</h2><ul style="margin-top:8px;list-style:disc;padding-left:24px;display:grid;gap:6px;line-height:1.6"><li>A Graded Discussion Board is a short written answer on a topic the teacher posts — the board stays open only <strong>2–3 days</strong>.</li><li>It usually carries <strong>2–5%</strong> of the course marks, graded on relevance, clarity and originality.</li><li>Write it <strong>in your own words</strong> — copied text from the internet or another student gets zero, and VU checks.</li><li>Structure that works: your clear position, one or two reasons, one real example, one short conclusion. Draft it in the GDB Drafter here first, then paste it into VULMS.</li></ul><div style="margin-top:12px"><button type="button" class="btn-primary" data-go="gdb">Open GDB Drafter →</button></div></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">3 · What each piece is worth</h2><p style="margin-top:8px">A very common VU scheme — always check your own course page, because it can differ:</p><ul style="margin-top:8px;list-style:none;padding:0;display:grid;gap:6px" class="list-divide">' +
+    [['Assignments', '10%'], ['Quizzes', '3–10%'], ['GDB', '2–5%'], ['Midterm exam', '35%'], ['Final term exam', '50%']].map(function (r) { return '<li style="display:flex;justify-content:space-between"><span>' + r[0] + '</span><strong>' + r[1] + '</strong></li>'; }).join('') + '</ul>' +
+    '<p style="margin-top:12px;background:var(--amber-soft);border-radius:12px;padding:12px 16px;font-size:.9rem"><strong>Passing needs all three:</strong> at least 20% in the first half (assignments + quizzes + GDB + midterm), at least 20% in the final term, and at least 40% overall. Fail any one and the course is an F — even with a good total. Try it in the CGPA Planner\u2019s pass/fail checker.</p></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">⚠ What not to do</h2><ul style="margin-top:8px;list-style:disc;padding-left:24px;display:grid;gap:6px;line-height:1.6"><li>Don\u2019t copy assignments or GDBs from the internet or a friend — VU uses plagiarism checks and copied work gets zero.</li><li>Don\u2019t buy \u201csolved assignment\u201d packs — they are often wrong for your semester\u2019s questions.</li><li>Don\u2019t use auto-solve tools or ask anyone to attempt your quizzes for you — it is a disciplinary matter, not a shortcut.</li><li>Don\u2019t wait for the last hour: VULMS does not extend deadlines because a student missed an announcement.</li></ul></div></div>' +
+    '<div style="display:grid;gap:16px;align-content:start">' +
+    '<form class="card" style="padding:24px;display:grid;gap:16px" id="deadlineForm"><h2 class="font-display" style="font-size:1.25rem">My deadlines — never miss one</h2>' +
+    '<div><label class="field-label" for="dl-title">What is due?</label><input id="dl-title" class="field" placeholder="e.g. CS101 Assignment 1" required></div>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="dl-type">Type</label><select id="dl-type" class="field">' + ['Assignment', 'Quiz', 'GDB', 'Fee challan', 'Exam', 'Other'].map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></div>' +
+    '<div><label class="field-label" for="dl-code">Course code</label><input id="dl-code" class="field" placeholder="CS101"></div></div>' +
+    '<div><label class="field-label" for="dl-date">Due date</label><input id="dl-date" type="date" class="field" required></div>' +
+    '<div id="dlMsg"></div><button type="submit" class="btn-primary" style="width:100%">Add deadline</button>' +
+    '<p class="dim small">Your deadlines live in this browser only. Copy them from the announcements on VULMS — VU announces every due date there first.</p></form>' +
+    '<div><h2 class="font-display" style="font-size:1.25rem;margin-bottom:12px">Upcoming deadlines</h2>' +
+    (list.length === 0 ? empty('No deadlines tracked yet', 'Add your next assignment, quiz or GDB due date from VULMS above. This list sorts itself by date, and the urgent ones jump to the top with a warning.')
+      : list.map(function (d) {
+        var dl = daysLeft(d.dueDate);
+        var chip = dl == null ? '' : dl < 0 ? '<span class="chip" style="background:var(--coral-soft);color:var(--coral)">Overdue by ' + (-dl) + ' day' + (-dl === 1 ? '' : 's') + '</span>'
+          : dl === 0 ? '<span class="chip" style="background:var(--coral-soft);color:var(--coral)">Due today!</span>'
+          : dl === 1 ? '<span class="chip chip-amber">Due tomorrow</span>'
+          : dl <= 3 ? '<span class="chip chip-amber">' + dl + ' days left</span>'
+          : '<span class="chip">' + dl + ' days left</span>';
+        return '<article class="card mb" style="padding:16px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><p style="font-weight:700">' + esc(d.title) + ' <span class="dim">· ' + esc(d.type) + (d.courseCode ? ' · ' + esc(d.courseCode) : '') + '</span></p>' + chip + '</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span class="dim small">Due ' + fmtDate(d.dueDate) + '</span><button type="button" class="btn-danger" data-deldeadline="' + d.id + '">Done / Remove</button></div></article>';
+      }).join('')) + '</div></div></div>';
+}
+assignmentsView.onMount = function () {
+  var f = $('deadlineForm'); if (!f) return;
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var title = $('dl-title').value.trim(), date = $('dl-date').value;
+    if (!title || !date) return;
+    var arr = store.deadlines();
+    arr.unshift({ id: uid(), title: title, type: $('dl-type').value, courseCode: $('dl-code').value.trim().toUpperCase(), dueDate: date, createdAt: new Date().toISOString() });
+    save('deadlines', arr); render();
+  });
+  document.querySelectorAll('[data-deldeadline]').forEach(function (b) {
+    b.addEventListener('click', function () { del('deadlines', b.getAttribute('data-deldeadline')); });
+  });
+};
+
 /* ---------- CGPA planner ---------- */
 function cgpaLabelText(key, u) {
   if (key === 'currentCgpa') return 'Current CGPA: ' + u.currentCgpa.toFixed(2);
@@ -1250,7 +1324,17 @@ function cgpaView() {
     (hasDegree ? '<button type="button" class="btn-ghost" id="cgUseDegree" style="width:100%">↩ Use my Degree Dashboard data — CGPA ' + ds.cgpa.toFixed(2) + ', ' + ds.done + ' credits done</button>' : '') +
     sliders.map(function (f) { return '<div><label class="field-label" id="cg-lab-' + f[6] + '" for="' + f[0] + '">' + f[1] + '</label><input id="' + f[0] + '" type="range" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[2] + '" data-cg="' + f[6] + '"></div>'; }).join('') +
     '<p class="dim small">Tip: your exact CGPA and credits are in your VULMS grade book — and the Degree Dashboard here computes them from your courses automatically.</p></div>' +
-    '<div id="cgpaResults" style="display:grid;gap:20px;align-content:start">' + cgpaResultsHtml(u) + '</div></div>';
+    '<div id="cgpaResults" style="display:grid;gap:20px;align-content:start">' + cgpaResultsHtml(u) + '</div></div>' +
+    '<div class="grid lg2 mt" style="gap:24px">' +
+    '<div class="card" style="padding:24px;display:grid;gap:16px;height:fit-content"><h2 class="font-display" style="font-size:1.25rem">✅ Pass / Fail checker</h2><p class="dim" style="font-size:.9rem">VU passes a course only if <strong>all three</strong> rules hold: at least 20% in the first half, at least 20% in the final term, and at least 40% overall. Enter your marks and see instantly.</p>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="pf-fa">First-half marks obtained</label><input id="pf-fa" type="number" min="0" max="200" class="field" placeholder="e.g. 32"></div><div><label class="field-label" for="pf-fat">First-half total marks</label><input id="pf-fat" type="number" min="1" max="200" class="field" value="50"></div></div>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="pf-fin">Final term marks obtained</label><input id="pf-fin" type="number" min="0" max="200" class="field" placeholder="e.g. 28"></div><div><label class="field-label" for="pf-fint">Final term total marks</label><input id="pf-fint" type="number" min="1" max="200" class="field" value="50"></div></div>' +
+    '<div id="pfResult" role="status"><p class="dim small">Enter both halves to check the three rules.</p></div></div>' +
+    '<div class="card" style="padding:24px;display:grid;gap:16px;height:fit-content"><h2 class="font-display" style="font-size:1.25rem">🔮 Final marks predictor</h2><p class="dim" style="font-size:.9rem">Most-asked question: <em>\u201cWhat do I need in the final term to get grade X?\u201d</em> Enter your first-half marks (out of 50) and your target grade — the answer is instant.</p>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="fp-fa">First-half marks (out of 50)</label><input id="fp-fa" type="number" min="0" max="50" class="field" placeholder="e.g. 32"></div>' +
+    '<div><label class="field-label" for="fp-grade">Target grade</label><select id="fp-grade" class="field">' + D.GRADE_SCALE.slice(0, 10).map(function (g) { return '<option value="' + g.grade + '">' + g.grade + ' (' + g.range + ')</option>'; }).join('') + '</select></div></div>' +
+    '<div id="fpResult" role="status"><p class="dim small">Enter your first-half marks to see what the final term must deliver.</p></div>' +
+    '<p class="dim small">Grade boundaries use the standard VU scale and relative grading can shift them slightly — always confirm against your VULMS grade book.</p></div></div>';
 }
 cgpaView.onMount = function () {
   var useBtn = $('cgUseDegree');
@@ -1272,6 +1356,39 @@ cgpaView.onMount = function () {
       var res = $('cgpaResults'); if (res) res.innerHTML = cgpaResultsHtml(UI.cgpa);
     });
   });
+  // Pass / fail checker — the three official VU rules, checked in place.
+  function checkPassFail() {
+    var fa = +$('pf-fa').value, fat = +$('pf-fat').value || 50, fin = +$('pf-fin').value, fint = +$('pf-fint').value || 50;
+    var out = $('pfResult'); if (!out) return;
+    if (!$('pf-fa').value || !$('pf-fin').value) { out.innerHTML = '<p class="dim small">Enter both halves to check the three rules.</p>'; return; }
+    var fa50 = fa / fat * 50, fin50 = fin / fint * 50, agg = fa50 + fin50;
+    var r1 = fa50 >= 10, r2 = fin50 >= 10, r3 = agg >= 40;
+    function row(ok, label, detail) {
+      return '<li style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>' + (ok ? '✓ ' : '✗ ') + label + '</span><span class="chip" style="' + (ok ? '' : 'background:var(--coral-soft);color:var(--coral)') + '">' + detail + '</span></li>';
+    }
+    var pass = r1 && r2 && r3;
+    out.innerHTML = '<ul class="list-divide" style="list-style:none;padding:0;margin:0;display:grid;gap:6px">' +
+      row(r1, 'Rule 1 — first half ≥ 20%', fa50.toFixed(1) + ' / 50') +
+      row(r2, 'Rule 2 — final term ≥ 20%', fin50.toFixed(1) + ' / 50') +
+      row(r3, 'Rule 3 — overall ≥ 40%', agg.toFixed(1) + ' / 100') + '</ul>' +
+      '<div style="margin-top:12px;border-radius:16px;padding:16px;background:' + (pass ? 'var(--accent-soft)' : 'var(--coral-soft)') + '" role="status"><p style="font-weight:700">' + (pass ? '✓ PASS — all three rules are met.' : '✗ FAIL — one or more rules are not met. Failing even one rule means an F for the course.') + '</p></div>';
+  }
+  ['pf-fa', 'pf-fat', 'pf-fin', 'pf-fint'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('input', checkPassFail); });
+  // Final marks predictor — marks needed in the final (out of 50) for a target grade.
+  function predictFinal() {
+    var fa = +$('fp-fa').value;
+    var grade = $('fp-grade').value;
+    var out = $('fpResult'); if (!out) return;
+    if (!$('fp-fa').value) { out.innerHTML = '<p class="dim small">Enter your first-half marks to see what the final term must deliver.</p>'; return; }
+    var minPct = { 'A': 85, 'A-': 80, 'B+': 75, 'B': 71, 'B-': 68, 'C+': 64, 'C': 61, 'C-': 58, 'D+': 54, 'D': 50 }[grade] || 50;
+    var need = minPct - fa;
+    var msg;
+    if (need > 50) msg = '<p style="font-weight:700">Not possible for ' + grade + ' — even a perfect 50/50 in the final only reaches ' + (fa + 50) + '%. Aim one grade lower, or repeat the course later.</p>';
+    else if (need <= 10) msg = '<p style="font-weight:700">You need just 10 / 50 in the final term for ' + grade + ' — but remember, 10 is the minimum to pass the final half at all, so aim higher for safety.</p>';
+    else msg = '<p style="font-weight:700">You need ' + need + ' / 50 in the final term for a ' + grade + '.</p><p class="small" style="margin-top:4px">That is ' + Math.round(need / 50 * 100) + '% of the final paper. Anything above ' + need + ' pushes you toward the next grade up.</p>';
+    out.innerHTML = '<div style="border-radius:16px;padding:16px;background:var(--accent-soft)" role="status">' + msg + '</div>';
+  }
+  ['fp-fa', 'fp-grade'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('input', predictFinal); });
 };
 
 /* ---------- Stories ---------- */
@@ -1449,6 +1566,8 @@ function subjectView() {
   var quizQs = D.QUIZ_BANK.filter(function (q) { return q.subject.indexOf(code) === 0; });
   var myNotes = store.notes().filter(function (n) { return n.courseCode.toUpperCase() === code; });
   var myPapers = store.papers().filter(function (p) { return (p.courseCode || '').toUpperCase() === code; });
+  var scoredPapers = myPapers.filter(function (p) { return p.total > 0; });
+  var paperAvg = scoredPapers.length ? Math.round(scoredPapers.reduce(function (s, p) { return s + p.correct / p.total * 100; }, 0) / scoredPapers.length) : null;
   var quizLabel = quizQs.length ? quizQs[0].subject : 'Mixed (all subjects)';
   return head('Subject hub', code + ' · ' + name, guide ? guide.focus : 'Everything for this subject in one place — key points, quiz practice, your notes and your solved papers.') +
     '<div class="grid lg-2col" style="gap:24px"><div style="display:grid;gap:20px;align-content:start">' +
@@ -1456,12 +1575,16 @@ function subjectView() {
     (guide ? '<ul style="margin-top:12px;list-style:disc;padding-left:24px;display:grid;gap:8px;line-height:1.6">' + guide.points.map(function (pt) { return '<li>' + esc(pt) + '</li>'; }).join('') + '</ul>'
       : '<p class="dim" style="margin-top:8px">No ready-made key points for this code yet — add your own notes below and they will show up here.</p>') +
     '<p class="dim small" style="margin-top:12px">Handouts for this subject are on VULMS: open the course in VULMS → Downloads / handouts. See the Past Papers & Handouts Guide for the exact steps.</p></div>' +
+    (guide ? '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">What to study, and when</h2>' +
+    '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px"><span class="chip chip-amber">Midterm · ' + esc(guide.midterm) + '</span><span class="chip chip-amber">Final term · ' + esc(guide.final) + '</span></div>' +
+    '<p style="margin-top:16px;font-weight:700">Important topics</p><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">' + guide.topics.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' +
+    '<p style="margin-top:16px;font-weight:700">How to study it</p><p class="dim" style="margin-top:4px">' + esc(guide.method) + '</p></div>' : '') +
     '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Your notes for ' + esc(code) + '</h2>' +
     (myNotes.length ? '<ul class="mt" style="display:grid;gap:8px">' + myNotes.slice(0, 5).map(function (n) { return '<li style="background:var(--surface-2);border-radius:12px;padding:12px 16px"><strong>' + esc(n.title) + '</strong> <span class="dim small">· Lecture ' + n.lectureNo + '</span></li>'; }).join('') + '</ul>'
       : '<p class="dim" style="margin-top:8px">No notes saved for ' + esc(code) + ' yet. Add one — course code, lecture number, title and your key points — and it will live here.</p>') +
     '<button type="button" class="btn-primary mt" id="subjAddNote">+ Add a note for ' + esc(code) + '</button></div>' +
     '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Solved papers</h2>' +
-    (myPapers.length ? '<p class="dim" style="margin-top:8px">' + myPapers.length + ' paper' + (myPapers.length === 1 ? '' : 's') + ' solved for ' + esc(code) + ' — average score ' + Math.round(myPapers.reduce(function (s, p) { return s + (+p.score || 0); }, 0) / myPapers.length) + '%.</p>'
+    (myPapers.length ? '<p class="dim" style="margin-top:8px">' + myPapers.length + ' paper' + (myPapers.length === 1 ? '' : 's') + ' solved for ' + esc(code) + (paperAvg != null ? ' — average score ' + paperAvg + '%.</p>' : '.</p>')
       : '<p class="dim" style="margin-top:8px">No papers logged for ' + esc(code) + ' yet. Solve one, log your score, and watch your average grow.</p>') +
     '<button type="button" class="btn-ghost mt" data-go="papers">Open Past Papers Guide</button></div></div>' +
     '<div style="display:grid;gap:20px;align-content:start"><div class="card" style="padding:24px;display:grid;gap:12px"><h2 class="font-display" style="font-size:1.25rem">Do it now — ' + esc(code) + '</h2>' +
@@ -1537,6 +1660,7 @@ var VIEWS_FN = {
   dashboard: dashboardView, admin: adminView, faq: faqView, notes: notesView,
   routine: routineView, degree: degreeView, centres: centresView, guide: guideView,
   reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView, papers: papersView, subject: subjectView,
+  assignments: assignmentsView,
   cgpa: cgpaView, stories: storiesView, health: healthView, ask: askView
 };
 render();
