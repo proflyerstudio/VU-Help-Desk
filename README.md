@@ -6,19 +6,23 @@ repository, with no server and no database.
 
 > **No sign-in wall.** The home page, FAQ, every tool, the quiz, CGPA
 > planner, datesheet scheduler and notes are all visible and usable without
-> an account. A demo role login is only used for personal dashboards and the
-> Admin Panel — and it is a demo profile, **not** a real VULMS account.
+> an account. Signing up creates a VU Help Desk account (name, email and
+> password, saved in your browser only) for your personal dashboard and the
+> Admin Panel. It is **not** a VULMS account and never connects to VULMS.
 
 ## What's inside
 
-- **21 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
+- **22 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
   Teacher Dashboard, Admin Dashboard, Admin Panel, FAQ Top 50, Notes
-  Organizer, Routine Builder, Degree Progress, Exam Centers, Freshman Guide,
+  & Handouts, Study Planner, Degree Progress, Exam Centers, Freshman Guide,
   Course Reviews, GDB Drafter, Datesheet Scheduler, Quiz Practice, Past
-  Papers Guide, CGPA Planner, Stories, Health Desk, Ask the Community.
+  Papers Guide, Subject Hub, CGPA Planner, Stories, Health Desk, Ask the Community.
 - **All 15 tools work client-side** (the original 13 plus Ask the Community
-  and the Past Papers & Handouts Guide): searchable FAQ (all 50 questions),
-  notes by course/lecture, weekly routine builder, degree progress with real
+  and the Past Papers & Handouts Guide), plus a Subject Hub: type a subject
+  code (e.g. CS101) on the home page and get that subject's key points, quiz
+  questions, your notes and solved papers in one place. Searchable FAQ (all
+  50 questions),
+  notes by course/lecture, study planner, degree progress with real
   CGPA maths on the VU grade scale, exam centre navigator, freshman guide
   with saved progress, course reviews with difficulty scores, GDB drafter
   with live character/word counts, datesheet scheduler (14-day window) with
@@ -63,14 +67,16 @@ No build step, no dependencies, no environment variables.
 | --- | --- |
 | `index.html` | App shell: branded header (logo, search, theme toggle, login), sidebar + mobile menu, bottom quick-nav |
 | `assets/css/style.css` | Full theme + responsive layout (emerald/amber/ink, light/dark) |
-| `assets/js/data.js` | Reference content copied exactly from the original site: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 34-question quiz bank |
-| `assets/js/app.js` | The whole app: routing, all 20 views, all tools, localStorage persistence, admin moderation |
+| `assets/js/data.js` | Reference content: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 34-question quiz bank, 6 subject guides |
+| `assets/js/app.js` | The whole app: routing, all 22 views, all tools, localStorage persistence, accounts, admin moderation |
 | `vercel.json` | Static-hosting config for Vercel |
 
 ## Honesty notes
 
-- Login is a **demo role profile** — it is not a VULMS account and cannot
-  access any real VU account.
+- Accounts on this site are VU Help Desk accounts (name, email, password
+  stored as a simple hash in this browser only). They are **not** VULMS
+  accounts, never connect to VULMS, and never ask for a VULMS password.
+  For VULMS, visit vulms.vu.edu.pk.
 - Exam-centre addresses are reproduced exactly as published by the original
   site, including any "(confirm exact address on vu.edu.pk campus list)"
   notes. Centres can move — always verify on the

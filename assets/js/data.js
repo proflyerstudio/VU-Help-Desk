@@ -131,6 +131,18 @@ const GUIDE_STEPS = [
 ];
 
 
+/* Subject hubs — original short study guides written for this site (not copied
+   from any other site). Each subject page shows these key points, its quiz
+   questions, the student's own notes and solved papers, all in one place. */
+const SUBJECTS = [
+  { code: "CS101", name: "Introduction to Computing", points: ["Binary number system: 1 byte = 8 bits; computers store everything as 0s and 1s.", "CPU is the brain (Central Processing Unit); RAM is fast but volatile, storage is slow but permanent.", "An operating system (like Windows) manages hardware and runs your programs.", "The internet connects computers worldwide; WWW is the system of linked pages on it."], focus: "Midterm: binary, hardware, memory. Final: operating systems, networks, data vs information." },
+  { code: "MTH101", name: "Calculus and Analytical Geometry", points: ["A limit describes what a function approaches as x gets close to a value.", "Derivative = rate of change. Power rule: d/dx(x^n) = n*x^(n-1).", "Integration is the reverse of differentiation — it finds area under a curve.", "Always practise with numbers: 15% of 200 is 30, and sqrt(144) = 12."], focus: "Midterm: limits and derivatives. Final: integrals and their applications." },
+  { code: "ENG101", name: "English Comprehension", points: ["With 'doesn't', the main verb stays in base form: 'She doesn't like tea.'", "'Go' is irregular: past tense is 'went', not 'goed'.", "A proper noun names a specific person or place and is capitalised: Lahore, Ayesha.", "Read the passage first, then the questions — most answers hide in the text itself."], focus: "Midterm: grammar and vocabulary. Final: comprehension passages and writing." },
+  { code: "MGT101", name: "Principles of Management", points: ["Four functions: Planning, Organising, Leading, Controlling — in that order.", "Planning sets goals; Controlling checks whether work matches the plan.", "SWOT = Strengths, Weaknesses, Opportunities, Threats.", "Autocratic leaders decide alone; democratic leaders decide with the team."], focus: "Midterm: functions and history of management. Final: leadership, motivation, control." },
+  { code: "STA301", name: "Statistics and Probability", points: ["Mean = sum / count. Median = middle value. Mode = most frequent value.", "Range = largest - smallest. Probability of heads in one fair toss = 1/2.", "A probability is always between 0 and 1 — if your answer is bigger, recheck.", "Draw the data first: a simple table or graph stops most silly mistakes."], focus: "Midterm: averages and probability basics. Final: distributions and real data problems." },
+  { code: "CS201", name: "Introduction to Programming", points: ["In C++, most statements end with a semicolon ';'.", "'=' assigns a value; '==' compares two values — mixing them up is the classic bug.", "A do-while loop always runs at least once; a while loop may run zero times.", "cout and cin live in <iostream> — include it at the top of every program."], focus: "Midterm: basics, input/output, loops. Final: functions, arrays and logic." },
+];
+
 const QUIZ_BANK = [
   { subject: "CS101 · Computer Science", q: "What does CPU stand for?", options: ["Central Processing Unit", "Computer Personal Unit", "Central Program Utility", "Control Processing Unit"], answer: 0, explain: "CPU = Central Processing Unit, the processor that executes instructions." },
   { subject: "CS101 · Computer Science", q: "Which of these is an input device?", options: ["Monitor", "Printer", "Keyboard", "Speaker"], answer: 2, explain: "A keyboard sends data into the computer; the others are output devices." },
@@ -209,4 +221,4 @@ const PROGRAMS = [
    If VU restores the directory deep link, point this constant back at it. */
 const VU_OFFICIAL_CAMPUS_URL = "https://www.vu.edu.pk/";
 const VULMS_URL = "https://vulms.vu.edu.pk";
-window.VU_DATA = { FAQS, FAQ_CATEGORIES, GRADE_SCALE, GRADE_POINTS, CENTRES, GUIDE_STEPS, QUIZ_BANK, STORY_TAGS, QUESTION_CATEGORIES, PROGRAMS, VU_OFFICIAL_CAMPUS_URL, VULMS_URL };
+window.VU_DATA = { FAQS, FAQ_CATEGORIES, GRADE_SCALE, GRADE_POINTS, CENTRES, GUIDE_STEPS, QUIZ_BANK, SUBJECTS, STORY_TAGS, QUESTION_CATEGORIES, PROGRAMS, VU_OFFICIAL_CAMPUS_URL, VULMS_URL };

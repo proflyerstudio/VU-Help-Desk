@@ -1,7 +1,9 @@
 /* VU Student Help Website — static version.
    Plain HTML/CSS/JS, no server. All user content is stored in this browser's
    localStorage only (key prefix "vuhelp.v1."). Community sections start empty.
-   Login is a DEMO role profile only — it is NOT a real VULMS account. */
+   Accounts are VU Help Desk accounts created on this site (name, email and a
+   password stored as a simple hash in this browser only). They are NOT VULMS
+   accounts and never connect to VULMS. */
 (function () {
 'use strict';
 var D = window.VU_DATA;
@@ -29,10 +31,13 @@ function load(key, fallback) {
 function save(key, val) { try { localStorage.setItem('vuhelp.v1.' + key, JSON.stringify(val)); } catch (e) {} }
 function del(key, id) { var arr = load(key, []); save(key, arr.filter(function (x) { return x.id !== id; })); render(); }
 
+function pwHash(s) { var h = 5381; for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; } return 'h' + h.toString(36); }
 var store = {
   profile: function () { return load('profile', null); },
   setProfile: function (p) { save('profile', p); render(); },
   signOut: function () { try { localStorage.removeItem('vuhelp.v1.profile'); } catch (e) {} render(); },
+  accounts: function () { return load('accounts', []); },
+  saveAccounts: function (a) { save('accounts', a); },
   notes: function () { return load('notes', []); },
   degreeCourses: function () { return load('degreeCourses', []); },
   degreeSettings: function () { return load('degreeSettings', { program: 'BS Computer Science', totalCredits: 132, targetCgpa: 3.0 }); },
@@ -71,16 +76,16 @@ function degreeStats() {
 var VIEWS = {
   home: 'Home', about: 'About Us', login: 'Login', contact: 'Contact Us',
   dashboard: 'My Dashboard', admin: 'Admin Panel', faq: 'FAQ — Top 50',
-  notes: 'Notes Organizer', routine: 'Routine Builder', degree: 'Degree Progress',
+  notes: 'Notes & Handouts', routine: 'Study Planner', degree: 'Degree Progress',
   centres: 'Exam Centers', guide: 'Freshman Guide', reviews: 'Course Reviews',
   gdb: 'GDB Drafter', datesheet: 'Datesheet Scheduler', quiz: 'Quiz Practice',
-  papers: 'Past Papers Guide',
+  papers: 'Past Papers Guide', subject: 'Subject Hub',
   cgpa: 'CGPA Planner', stories: 'Stories', health: 'Health Desk', ask: 'Ask the Community'
 };
 var TOOLS = [
   { n: '01', view: 'faq', title: 'FAQ — Top 50 Answers', blurb: 'The 50 questions every VU student asks, answered in one searchable place.', solves: 'No more digging through Facebook groups' },
-  { n: '02', view: 'notes', title: 'Lecture Notes Organizer', blurb: 'Save notes by course code, subject and lecture number — always findable.', solves: 'Lost notes before exams' },
-  { n: '03', view: 'routine', title: 'Study Routine Builder', blurb: 'Enter courses, free hours and deadlines — get a realistic weekly plan.', solves: 'Falling behind on lectures' },
+  { n: '02', view: 'notes', title: 'Notes & Handouts Organizer', blurb: 'Save notes by course code, subject and lecture number — always findable.', solves: 'Lost notes before exams' },
+  { n: '03', view: 'routine', title: 'Study Planner', blurb: 'Enter courses, free hours and deadlines — get a realistic weekly study plan.', solves: 'Falling behind on lectures' },
   { n: '04', view: 'degree', title: 'Degree Progress Dashboard', blurb: 'Log completed courses and credit hours, watch your degree fill up.', solves: 'Not knowing where you stand' },
   { n: '05', view: 'centres', title: 'Exam Center Navigator', blurb: 'City-wise campus addresses plus real student reviews of exam halls.', solves: 'Choosing a bad exam centre' },
   { n: '06', view: 'guide', title: 'Freshman Guide', blurb: 'A step-by-step roadmap from admission to your first result.', solves: 'New students feeling lost' },
@@ -123,7 +128,7 @@ function footerHtml() {
   var toolLinks2 = TOOLS.slice(7).map(function (t) { return '<li><a href="#/' + t.view + '">' + esc(t.title) + '</a></li>'; }).join('');
   return '<footer class="site"><div class="cols">' +
     '<div><h3>🦉 VU Help Desk</h3><p style="font-size:.9rem;color:var(--dim)">A student help project built for Virtual University students — not an official VU website. Everything on this site is free to read and use, no account needed. Always confirm fees, dates and rules on VULMS and vu.edu.pk.</p>' +
-    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Your notes, reviews and drafts are saved in this browser only (localStorage). The login is a demo role profile — it is not a real VULMS account.</p></div>' +
+    '<p style="font-size:.85rem;color:var(--dim);margin-top:12px">Your account, notes, reviews and drafts are saved in this browser only (localStorage). This site is not affiliated with VU — for VULMS, visit vulms.vu.edu.pk.</p></div>' +
     '<div><h3>Student tools</h3><ul>' + toolLinks + '</ul></div>' +
     '<div><h3>More tools & official links</h3><ul>' + toolLinks2 +
     '<li><a href="' + D.VULMS_URL + '" target="_blank" rel="noreferrer">Open VULMS ↗</a></li>' +
@@ -141,7 +146,7 @@ function navHtml() {
     item('home', 'Home') + item('dashboard', 'My Dashboard') + item('about', 'About Us') + item('contact', 'Contact Us') + '</div>' +
     '<div class="nav-group"><p>Student tools</p>' +
     TOOLS.map(function (t) { return item(t.view, t.n + ' · ' + t.title.split('—')[0].trim()); }).join('') + '</div>' +
-    '<div class="nav-group"><p>Account</p>' + item('login', p ? 'Profile · ' + p.name : 'Login') +
+    '<div class="nav-group"><p>Account</p>' + item('login', p ? 'My Account · ' + p.name : 'Login / Sign Up') +
     (p && p.role === 'admin' ? item('admin', 'Admin Panel') : '') + '</div></nav>';
   return h;
 }
@@ -205,12 +210,14 @@ function homeView() {
       '<p class="dim" style="font-size:.9rem">' + ds.done + ' of ' + ds.settings.totalCredits + ' credit hours in ' + esc(ds.settings.program) + '</p></div>' +
       '<button type="button" class="btn-ghost" style="width:100%;margin-top:16px" data-go="degree">Update my courses</button></div>'
     : '<div class="card" style="padding:20px"><p class="small" style="font-weight:600;color:var(--dim)">Degree progress</p>' +
-      '<p class="dim" style="margin-top:8px">Sign in, add your completed courses, and this card becomes your personal degree tracker — credits, CGPA and what\u2019s left.</p>' +
+      '<p class="dim" style="margin-top:8px">Create your account, add your completed courses, and this card becomes your personal degree tracker — credits, CGPA and what\u2019s left.</p>' +
       '<button type="button" class="btn-ghost" style="width:100%;margin-top:16px" data-go="degree">Set up my degree</button></div>';
   return '<section class="grid lg2" style="align-items:center;gap:32px"><div>' +
-    '<span class="chip chip-amber">For Virtual University students, by students</span>' +
+    '<span class="chip chip-amber">Free to use · No sign-in wall</span>' +
     '<h1 class="font-display" style="margin-top:16px;font-size:2.5rem;line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
     '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 15 working tools in one place. No Facebook-group archaeology required.</p>' +
+    '<form id="homeSubjectForm" style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" role="search" aria-label="Find a subject"><label class="sr-only" for="homeSubjectInput">Apna subject code likhein</label><input id="homeSubjectInput" class="field" style="flex:1;min-width:220px;font-size:1.05rem" placeholder="Apna subject code likhein — jaise CS101" autocomplete="off"><button type="submit" class="btn-primary">Open subject →</button></form>' +
+    '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px" aria-label="Popular subjects">' + ['CS101', 'MTH101', 'ENG101', 'MGT101', 'STA301', 'CS201'].map(function (c) { return '<button type="button" class="chip" data-subject="' + c + '" style="font-weight:700">' + c + '</button>'; }).join('') + '</div>' +
     '<div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px">' +
     '<button type="button" class="btn-primary" data-go="' + (p ? 'dashboard' : 'login') + '">' + (p ? 'Open my dashboard' : 'Get started — it\u2019s free') + '</button>' +
     '<button type="button" class="btn-ghost" data-go="guide">I\u2019m new — show me the guide</button></div>' +
@@ -222,14 +229,27 @@ function homeView() {
     stat('Exams planned', String(c.datesheetItems), 'On your test datesheet') +
     stat('Questions answered', String(c.answers), 'By the community so far') + '</div></section>' +
     '<section class="mt3"><div class="mascot"><span class="face" aria-hidden="true">🦉</span><div><h3>Meet Vee, your study buddy</h3><p>Vee the owl lives here to cheer you on — no sign-in, no locked doors. Everything on this page is open: read the FAQ, try a quiz, plan your CGPA. Vee\u2019s tip for today: <b>submit assignments 24 hours early</b> — last-hour uploads are the #1 cause of lost marks.</p></div><button type="button" class="btn-amber" style="flex-shrink:0" data-go="guide">Vee, guide me →</button></div></section>' +
-    '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">Everything, in one index</h2><p class="dim" style="margin-top:4px">Fourteen tools, each built for one real problem. Tap any card to start.</p>' +
+    '<section class="mt3"><h2 class="font-display" style="font-size:1.5rem">Everything, in one index</h2><p class="dim" style="margin-top:4px">15 tools, each built for one real problem. Tap any card to start.</p>' +
     '<div class="grid sm2 lg3 mt" style="gap:16px">' + cards + '</div></section>' +
     '<section class="mt3 grid lg3" style="gap:16px">' +
-    [['1 · Sign in once', 'Pick your role — student, teacher or admin — and your program. Your dashboards and tools personalise around it.'],
+    [['1 · Create your account', 'Sign up in seconds — name, email and password — and your notes, routine and degree stay saved in this browser, on your own dashboard.'],
      ['2 · Use the tools daily', 'Save notes, draft GDBs, plan your datesheet and routine. Everything you add is stored in this browser and waiting next visit.'],
      ['3 · Help the next student', 'Leave a course review, answer a question, review your exam centre. The community gets smarter with every post.']]
     .map(function (s) { return '<div style="background:var(--accent-soft);border-radius:var(--radius);padding:24px"><p class="font-display" style="font-size:1.1rem;font-weight:700;color:var(--accent)">' + s[0] + '</p><p style="margin-top:8px">' + s[1] + '</p></div>'; }).join('') + '</section>';
 }
+homeView.onMount = function () {
+  var f = $('homeSubjectForm');
+  function openSubject(code) {
+    code = (code || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!code) return;
+    UI.subjectCode = code;
+    go('subject');
+  }
+  if (f) f.addEventListener('submit', function (e) { e.preventDefault(); openSubject($('homeSubjectInput').value); });
+  document.querySelectorAll('[data-subject]').forEach(function (b) {
+    b.addEventListener('click', function () { openSubject(b.getAttribute('data-subject')); });
+  });
+};
 function aboutView() {
   return '<div style="max-width:48rem;margin:0 auto">' + head('About us', 'Built for the way VU students actually struggle', 'Virtual University is Pakistan\u2019s pioneering online university — but studying alone from home brings its own problems. This site exists to solve them, one tool at a time.') +
     '<div style="display:grid;gap:20px;line-height:1.7"><p>Most VU help lives in scattered Facebook groups, WhatsApp forwards and seniors\u2019 memories. Answers get buried, deadlines get missed, and new students repeat the same mistakes every semester. We gathered the problems students report most — VULMS confusion, missed assignments, CGPA guesswork, datesheet stress, bad exam-centre experiences, and the loneliness of distance learning — and built a working tool for each one.</p>' +
@@ -243,42 +263,77 @@ function aboutView() {
 }
 function loginView() {
   var p = store.profile();
-  UI.login = UI.login || { name: p ? p.name : '', email: p ? p.email : '', role: p ? p.role : 'student', program: p ? p.program : D.PROGRAMS[0] };
+  UI.login = UI.login || { mode: p ? 'account' : 'signup', name: p ? p.name : '', email: p ? p.email : '', password: '', role: p ? p.role : 'student', program: p ? p.program : D.PROGRAMS[0], error: '', ok: '' };
   var u = UI.login;
-  return '<div style="max-width:36rem;margin:0 auto">' + head('Login', 'Who\u2019s studying today?', 'Choose your role to open the right dashboard. This is a DEMO login — it stores a demo profile in this browser only. It is NOT your VULMS account, and no password is needed.') +
-    '<div class="note-warn mb">⚠ Demo only: this login is a demo role profile. It does not connect to VULMS and cannot access your real VU account.</div>' +
+  if (p) {
+    return '<div style="max-width:36rem;margin:0 auto">' + head('My account', 'Welcome back, ' + p.name.split(' ')[0] + '!', 'You are signed in to your VU Help Desk account as ' + p.role + '. Your notes, routine, degree and drafts are saved in this browser.') +
+      '<div class="card" style="padding:24px;display:grid;gap:16px"><p><strong>' + esc(p.name) + '</strong><br><span class="dim">' + esc(p.email || 'No email saved') + ' · ' + esc(p.role) + (p.program ? ' · ' + esc(p.program) : '') + '</span></p>' +
+      '<p class="dim small">Ye VU Help Desk ka apna account hai. VULMS ke liye vulms.vu.edu.pk par jayein.</p>' +
+      '<button type="button" class="btn-primary" style="width:100%" data-go="dashboard">Open my dashboard</button>' +
+      '<button type="button" class="btn-ghost" style="width:100%" id="signOutBtn">Log out (' + esc(p.name) + ')</button></div></div>';
+  }
+  var isSignup = u.mode === 'signup';
+  return '<div style="max-width:36rem;margin:0 auto">' + head('Login', isSignup ? 'Create your free account' : 'Welcome back', isSignup ? 'Your account saves your notes, study planner, degree progress and GDB drafts — in this browser, on your own dashboard.' : 'Sign in to your VU Help Desk account to open your dashboard.') +
+    '<div class="note-ok mb" role="note">Ye VU Help Desk ka apna account hai. VULMS ke liye vulms.vu.edu.pk par jayein.</div>' +
+    '<div style="display:flex;gap:8px;margin-bottom:16px" role="tablist" aria-label="Login or sign up">' +
+    '<button type="button" role="tab" aria-selected="' + isSignup + '" data-loginmode="signup" class="btn-ghost" style="flex:1;' + (isSignup ? 'background:var(--accent);color:var(--accent-ink);border-color:var(--accent)' : '') + '">Sign Up — new account</button>' +
+    '<button type="button" role="tab" aria-selected="' + (!isSignup) + '" data-loginmode="login" class="btn-ghost" style="flex:1;' + (!isSignup ? 'background:var(--accent);color:var(--accent-ink);border-color:var(--accent)' : '') + '">Login — I have an account</button></div>' +
     '<form class="card" style="padding:24px;display:grid;gap:20px" id="loginForm">' +
-    '<div><label class="field-label" for="login-name">Your name</label><input id="login-name" class="field" value="' + esc(u.name) + '" placeholder="e.g. Ayesha Khan" required></div>' +
-    '<div><label class="field-label" for="login-email">Email (optional)</label><input id="login-email" type="email" class="field" value="' + esc(u.email) + '" placeholder="you@example.com"></div>' +
-    '<div><span class="field-label">I am a…</span><div class="grid g3" style="gap:8px" role="radiogroup" aria-label="Role">' +
+    (isSignup ? '<div><label class="field-label" for="login-name">Your name</label><input id="login-name" class="field" value="' + esc(u.name) + '" placeholder="e.g. Ayesha Khan" required></div>' : '') +
+    '<div><label class="field-label" for="login-email">Email</label><input id="login-email" type="email" class="field" value="' + esc(u.email) + '" placeholder="you@example.com" required></div>' +
+    '<div><label class="field-label" for="login-password">Password' + (isSignup ? ' (at least 6 characters)' : '') + '</label><input id="login-password" type="password" class="field" value="' + esc(u.password) + '" placeholder="••••••••" autocomplete="' + (isSignup ? 'new-password' : 'current-password') + '" required></div>' +
+    (isSignup ? '<div><span class="field-label">I am a…</span><div class="grid g3" style="gap:8px" role="radiogroup" aria-label="Role">' +
     [['student', 'Student', 'Learn & track'], ['teacher', 'Teacher', 'Guide & answer'], ['admin', 'Admin', 'Manage site']].map(function (r) {
       return '<button type="button" role="radio" aria-checked="' + (u.role === r[0]) + '" data-role="' + r[0] + '" style="border-radius:16px;border:2px solid ' + (u.role === r[0] ? 'var(--accent)' : 'var(--border)') + ';background:' + (u.role === r[0] ? 'var(--accent-soft)' : 'var(--surface)') + ';padding:12px;text-align:center;color:var(--text)"><span style="display:block;font-weight:700">' + r[1] + '</span><span class="dim small">' + r[2] + '</span></button>';
-    }).join('') + '</div></div>' +
-    (u.role === 'student' ? '<div><label class="field-label" for="login-program">Study program</label><select id="login-program" class="field">' + D.PROGRAMS.map(function (pr) { return '<option' + (u.program === pr ? ' selected' : '') + '>' + esc(pr) + '</option>'; }).join('') + '</select></div>' : '') +
-    '<button type="submit" class="btn-primary" style="width:100%">' + (p ? 'Update profile & open dashboard' : 'Sign in & open my dashboard') + '</button>' +
-    (p ? '<button type="button" class="btn-ghost" style="width:100%" id="signOutBtn">Sign out (' + esc(p.name) + ')</button>' : '') +
+    }).join('') + '</div></div>' : '') +
+    (isSignup && u.role === 'student' ? '<div><label class="field-label" for="login-program">Study program</label><select id="login-program" class="field">' + D.PROGRAMS.map(function (pr) { return '<option' + (u.program === pr ? ' selected' : '') + '>' + esc(pr) + '</option>'; }).join('') + '</select></div>' : '') +
+    (u.error ? '<div class="note-bad" role="alert">' + esc(u.error) + '</div>' : '') +
+    (u.ok ? '<div class="note-ok" role="status">' + esc(u.ok) + '</div>' : '') +
+    '<button type="submit" class="btn-primary" style="width:100%">' + (isSignup ? 'Create my account & open dashboard' : 'Log in & open my dashboard') + '</button>' +
+    '<p class="dim small">Your password is stored as a simple hash in this browser only — never share your VULMS password here, or anywhere else.</p>' +
     '</form></div>';
 }
 loginView.onMount = function () {
+  var so = $('signOutBtn');
+  if (so) { so.addEventListener('click', function () { store.signOut(); go('home'); }); return; }
   var f = $('loginForm'); if (!f) return;
+  function sync() {
+    UI.login.email = $('login-email') ? $('login-email').value : UI.login.email;
+    UI.login.password = $('login-password') ? $('login-password').value : UI.login.password;
+    UI.login.name = $('login-name') ? $('login-name').value : UI.login.name;
+    if ($('login-program')) UI.login.program = $('login-program').value;
+  }
+  document.querySelectorAll('[data-loginmode]').forEach(function (b) {
+    b.addEventListener('click', function () { sync(); UI.login.mode = b.getAttribute('data-loginmode'); UI.login.error = ''; render(); });
+  });
   f.querySelectorAll('[data-role]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      // Preserve anything already typed before re-rendering the form.
-      UI.login.name = $('login-name') ? $('login-name').value : UI.login.name;
-      UI.login.email = $('login-email') ? $('login-email').value : UI.login.email;
-      if ($('login-program')) UI.login.program = $('login-program').value;
-      UI.login.role = b.getAttribute('data-role'); render();
-    });
+    b.addEventListener('click', function () { sync(); UI.login.role = b.getAttribute('data-role'); render(); });
   });
   f.addEventListener('submit', function (e) {
     e.preventDefault();
-    var name = $('login-name').value.trim();
-    if (!name) return;
-    store.setProfile({ id: 1, name: name, email: $('login-email').value.trim(), role: UI.login.role, program: UI.login.role === 'student' ? ($('login-program') ? $('login-program').value : D.PROGRAMS[0]) : (store.profile() ? store.profile().program : '') });
-    go('dashboard');
+    sync();
+    var u = UI.login, email = u.email.trim().toLowerCase();
+    if (!email || email.indexOf('@') === -1) { u.error = 'Please enter a valid email address.'; render(); return; }
+    if (!u.password || u.password.length < 6) { u.error = 'Password must be at least 6 characters.'; render(); return; }
+    var accounts = store.accounts();
+    if (u.mode === 'signup') {
+      if (!u.name.trim()) { u.error = 'Please enter your name.'; render(); return; }
+      if (accounts.some(function (a) { return a.email === email; })) { u.error = 'An account with this email already exists — switch to Login instead.'; render(); return; }
+      var acc = { id: uid(), name: u.name.trim(), email: email, passHash: pwHash(u.password), role: u.role, program: u.role === 'student' ? u.program : '', createdAt: new Date().toISOString() };
+      accounts.push(acc); store.saveAccounts(accounts);
+      UI.login.password = ''; UI.login.error = ''; UI.login.ok = '';
+      store.setProfile({ accountId: acc.id, name: acc.name, email: acc.email, role: acc.role, program: acc.program });
+      go('dashboard');
+    } else {
+      var found = null;
+      accounts.forEach(function (a) { if (a.email === email) found = a; });
+      if (!found) { u.error = 'No account with this email — create one with Sign Up.'; render(); return; }
+      if (found.passHash !== pwHash(u.password)) { u.error = 'Wrong password — please try again.'; render(); return; }
+      UI.login.password = ''; UI.login.error = ''; UI.login.ok = '';
+      store.setProfile({ accountId: found.id, name: found.name, email: found.email, role: found.role, program: found.program });
+      go('dashboard');
+    }
   });
-  var so = $('signOutBtn');
-  if (so) so.addEventListener('click', function () { store.signOut(); go('home'); });
 };
 function contactView() {
   var p = store.profile();
@@ -308,7 +363,7 @@ contactView.onMount = function () {
 /* ---------- Dashboards ---------- */
 function dashboardView() {
   var p = store.profile();
-  if (!p) return '<div style="max-width:36rem;margin:0 auto">' + empty('Sign in to see your dashboard', 'Your dashboard pulls together your degree progress, saved notes, planned exams and community activity. It takes ten seconds to set up.', '<button type="button" class="btn-primary" data-go="login">Go to login</button>') + '</div>';
+  if (!p) return '<div style="max-width:36rem;margin:0 auto">' + empty('Create your account to see your dashboard', 'Your dashboard pulls together your degree progress, saved notes, planned exams and community activity. It takes ten seconds to set up.', '<button type="button" class="btn-primary" data-go="login">Create my account</button>') + '</div>';
   var c = counts(), ds = degreeStats();
   var qs = store.questions();
   var unanswered = qs.filter(function (q) { return !(q.answers && q.answers.length); });
@@ -318,7 +373,7 @@ function dashboardView() {
     p.role === 'student' ? 'Here\u2019s your ' + (p.program || 'degree') + ' journey at a glance.'
     : p.role === 'teacher' ? 'Students are waiting for guidance — here is where you\u2019re needed most.'
     : 'Site health, community content and the moderation queue.') +
-    '<div class="note-warn mb" role="note">👤 Demo profile: you are signed in with a demo role profile saved in this browser. This is <b>not</b> a VULMS account and cannot access your real VU account.</div>';
+    '<div class="note-ok mb" role="note">👤 Signed in as ' + esc(p.name) + ' (' + esc(p.role) + ') — your VU Help Desk account. For VULMS, visit vulms.vu.edu.pk.</div>';
   if (p.role === 'student') {
     return headHtml +
       '<div class="grid sm2 lg4" style="gap:16px">' +
@@ -358,7 +413,7 @@ var ADMIN_TABS = [['messages', 'Inbox'], ['reviews', 'Course reviews'], ['storie
 function adminView() {
   var p = store.profile();
   if (!p || p.role !== 'admin') {
-    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is for the site admin role. Sign in with the Admin role to manage messages and moderate community content.', '<span class="chip chip-amber">Tip: Login → choose “Admin”</span>') + '</div>';
+    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is for the site admin role. Sign up with the Admin role to manage messages and moderate community content.', '<span class="chip chip-amber">Tip: Sign Up → choose “Admin”</span>') + '</div>';
   }
   UI.adminTab = UI.adminTab || 'messages';
   var c = counts();
@@ -473,7 +528,7 @@ function notesListHtml() {
   var list = store.notes().filter(function (n) {
     return !f || n.courseCode.toLowerCase().indexOf(f) !== -1 || n.title.toLowerCase().indexOf(f) !== -1 || (n.subject || '').toLowerCase().indexOf(f) !== -1;
   });
-  if (!list.length) return empty('No notes here yet', 'Add your first note with the form — start with today\u2019s lecture while it\u2019s fresh. Future exam-week you will be grateful.');
+  if (!list.length) return empty('No notes here yet', 'Add your first note with the form — course code, lecture number, title and your key points. Your notes stay saved in this browser, and you can find them here any time.');
   return list.map(function (n) {
     return '<article class="card mb" style="padding:20px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><p style="font-weight:700"><span style="color:var(--accent)">' + esc(n.courseCode) + '</span> <span class="dim">· Lecture ' + n.lectureNo + (n.subject ? ' · ' + esc(n.subject) : '') + '</span></p><span class="dim small">' + fmtDate(n.createdAt) + '</span></div>' +
       '<h3 class="font-display" style="margin-top:4px;font-size:1.15rem">' + esc(n.title) + '</h3>' +
@@ -484,9 +539,9 @@ function notesListHtml() {
 function notesView() {
   UI.noteFilter = UI.noteFilter || '';
   var courses = Array.from(new Set(store.notes().map(function (n) { return n.courseCode; })));
-  return head('Tool 02 · Notes', 'Lecture Notes Organizer', 'The problem: notes scattered across WhatsApp, screenshots and copy registers. The fix: every note filed by course code, subject and lecture number, searchable in seconds.') +
+  return head('Tool 02 · Notes & Handouts', 'Notes & Handouts Organizer', 'The problem: notes scattered across WhatsApp, screenshots and copy registers. The fix: every note filed by course code, subject and lecture number, searchable in seconds. Official handouts live on VULMS course downloads — see the Past Papers & Handouts Guide for where exactly.') +
     '<div class="grid lg-side" style="gap:24px"><form class="card" style="padding:24px;height:fit-content;display:grid;gap:16px" id="noteForm"><h2 class="font-display" style="font-size:1.25rem">Add a note</h2>' +
-    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="note-code">Course code</label><input id="note-code" class="field" placeholder="CS101" required></div>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="note-code">Course code</label><input id="note-code" class="field" value="' + esc(UI.notePrefillCode || '') + '" placeholder="CS101" required></div>' +
     '<div><label class="field-label" for="note-lec">Lecture #</label><input id="note-lec" type="number" min="1" max="999" class="field" value="1"></div></div>' +
     '<div><label class="field-label" for="note-subject">Subject name</label><input id="note-subject" class="field" placeholder="Introduction to Computing"></div>' +
     '<div><label class="field-label" for="note-title">Note title</label><input id="note-title" class="field" placeholder="Binary number system — key points" required></div>' +
@@ -529,7 +584,7 @@ function routineView() {
   UI.routine = UI.routine || { courses: [{ name: 'CS101', lecturesPerWeek: 3, deadline: '' }, { name: 'MTH101', lecturesPerWeek: 3, deadline: '' }], hoursPerDay: 2, studyDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], plan: null, planName: 'My weekly routine', savedMsg: '' };
   var u = UI.routine;
   var saved = store.routines();
-  return head('Tool 03 · Planning', 'Weekly Study Routine Builder', 'The problem: 15+ lectures a week, a job or family, and deadlines that sneak up. Tell the builder your courses, your free hours and your deadlines — it spreads the work into a week you can actually follow.') +
+  return head('Tool 03 · Study Planner', 'Study Planner — Weekly Routine Builder', 'The problem: 15+ lectures a week, a job or family, and deadlines that sneak up. Tell the planner your courses, your free hours and your deadlines — it spreads the work into a week you can actually follow.') +
     '<div class="grid lg-side2" style="gap:24px"><div class="card" style="padding:24px;height:fit-content;display:grid;gap:20px"><h2 class="font-display" style="font-size:1.25rem">Your courses</h2>' +
     u.courses.map(function (c, i) {
       return '<div style="border:2px solid var(--border);border-radius:16px;padding:16px"><div class="grid" style="grid-template-columns:1fr auto;gap:12px"><div><label class="field-label" for="rc-name-' + i + '">Course ' + (i + 1) + '</label><input id="rc-name-' + i + '" class="field" data-rcname="' + i + '" value="' + esc(c.name) + '" placeholder="CS101"></div>' +
@@ -1385,6 +1440,57 @@ askView.onMount = function () {
   });
 };
 
+/* ---------- Subject hub (Paper Bank style: one subject, everything in one place) ---------- */
+function subjectView() {
+  var code = (UI.subjectCode || 'CS101').toUpperCase();
+  var guide = null;
+  (D.SUBJECTS || []).forEach(function (s) { if (s.code === code) guide = s; });
+  var name = guide ? guide.name : code + ' — your subject';
+  var quizQs = D.QUIZ_BANK.filter(function (q) { return q.subject.indexOf(code) === 0; });
+  var myNotes = store.notes().filter(function (n) { return n.courseCode.toUpperCase() === code; });
+  var myPapers = store.papers().filter(function (p) { return (p.courseCode || '').toUpperCase() === code; });
+  var quizLabel = quizQs.length ? quizQs[0].subject : 'Mixed (all subjects)';
+  return head('Subject hub', code + ' · ' + name, guide ? guide.focus : 'Everything for this subject in one place — key points, quiz practice, your notes and your solved papers.') +
+    '<div class="grid lg-2col" style="gap:24px"><div style="display:grid;gap:20px;align-content:start">' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Key points to remember</h2>' +
+    (guide ? '<ul style="margin-top:12px;list-style:disc;padding-left:24px;display:grid;gap:8px;line-height:1.6">' + guide.points.map(function (pt) { return '<li>' + esc(pt) + '</li>'; }).join('') + '</ul>'
+      : '<p class="dim" style="margin-top:8px">No ready-made key points for this code yet — add your own notes below and they will show up here.</p>') +
+    '<p class="dim small" style="margin-top:12px">Handouts for this subject are on VULMS: open the course in VULMS → Downloads / handouts. See the Past Papers & Handouts Guide for the exact steps.</p></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Your notes for ' + esc(code) + '</h2>' +
+    (myNotes.length ? '<ul class="mt" style="display:grid;gap:8px">' + myNotes.slice(0, 5).map(function (n) { return '<li style="background:var(--surface-2);border-radius:12px;padding:12px 16px"><strong>' + esc(n.title) + '</strong> <span class="dim small">· Lecture ' + n.lectureNo + '</span></li>'; }).join('') + '</ul>'
+      : '<p class="dim" style="margin-top:8px">No notes saved for ' + esc(code) + ' yet. Add one — course code, lecture number, title and your key points — and it will live here.</p>') +
+    '<button type="button" class="btn-primary mt" id="subjAddNote">+ Add a note for ' + esc(code) + '</button></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Solved papers</h2>' +
+    (myPapers.length ? '<p class="dim" style="margin-top:8px">' + myPapers.length + ' paper' + (myPapers.length === 1 ? '' : 's') + ' solved for ' + esc(code) + ' — average score ' + Math.round(myPapers.reduce(function (s, p) { return s + (+p.score || 0); }, 0) / myPapers.length) + '%.</p>'
+      : '<p class="dim" style="margin-top:8px">No papers logged for ' + esc(code) + ' yet. Solve one, log your score, and watch your average grow.</p>') +
+    '<button type="button" class="btn-ghost mt" data-go="papers">Open Past Papers Guide</button></div></div>' +
+    '<div style="display:grid;gap:20px;align-content:start"><div class="card" style="padding:24px;display:grid;gap:12px"><h2 class="font-display" style="font-size:1.25rem">Do it now — ' + esc(code) + '</h2>' +
+    '<button type="button" class="btn-primary" id="subjQuiz">▶ Practice quiz — ' + quizQs.length + ' question' + (quizQs.length === 1 ? '' : 's') + '</button>' +
+    '<button type="button" class="btn-ghost" data-go="routine">Study Planner — plan this subject</button>' +
+    '<button type="button" class="btn-ghost" data-go="datesheet">Datesheet — place this paper</button>' +
+    '<button type="button" class="btn-ghost" data-go="gdb">GDB Drafter</button>' +
+    '<button type="button" class="btn-ghost" data-go="cgpa">CGPA Planner</button>' +
+    '<button type="button" class="btn-ghost" data-go="reviews">Course reviews for ' + esc(code) + '</button></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Not the right subject?</h2><p class="dim" style="margin-top:8px">Type another code on the home page, or pick a popular one:</p>' +
+    '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">' + ['CS101', 'MTH101', 'ENG101', 'MGT101', 'STA301', 'CS201'].map(function (c) { return '<button type="button" class="chip" data-subject="' + c + '" style="font-weight:700">' + c + '</button>'; }).join('') + '</div></div></div></div>';
+}
+subjectView.onMount = function () {
+  var code = (UI.subjectCode || 'CS101').toUpperCase();
+  var quizQs = D.QUIZ_BANK.filter(function (q) { return q.subject.indexOf(code) === 0; });
+  var qb = $('subjQuiz');
+  if (qb) qb.addEventListener('click', function () {
+    var pool = D.QUIZ_BANK.filter(function (q) { return q.subject.indexOf(code) === 0; });
+    var shuffled = pool.slice().sort(function () { return Math.random() - 0.5; }).slice(0, Math.min(10, pool.length));
+    UI.quiz = { subject: quizQs.length ? quizQs[0].subject : 'Mixed (all subjects)', started: true, finished: false, questions: shuffled, idx: 0, picked: null, score: 0, timeLeft: QUIZ_SECONDS_PER_Q, elapsed: 0 };
+    go('quiz');
+  });
+  var nb = $('subjAddNote');
+  if (nb) nb.addEventListener('click', function () { UI.noteFilter = code; UI.notePrefillCode = code; go('notes'); });
+  document.querySelectorAll('[data-subject]').forEach(function (b) {
+    b.addEventListener('click', function () { UI.subjectCode = b.getAttribute('data-subject'); render(); });
+  });
+};
+
 /* ---------- header search (searches tools, FAQ and centres — no login needed) ---------- */
 (function wireHeaderSearch() {
   var input = $('siteSearch'), box = $('searchResults');
@@ -1394,6 +1500,9 @@ askView.onMount = function () {
     var q = input.value.trim().toLowerCase();
     if (q.length < 2) { close(); return; }
     var results = [];
+    (D.SUBJECTS || []).forEach(function (s) {
+      if ((s.code + ' ' + s.name).toLowerCase().indexOf(q) !== -1) results.push({ label: s.code + ' · ' + s.name, sub: 'Subject hub — key points, quiz, notes & papers in one place', go: 'subject', subject: s.code });
+    });
     TOOLS.forEach(function (t) {
       if ((t.title + ' ' + t.blurb).toLowerCase().indexOf(q) !== -1) results.push({ label: t.title, sub: t.blurb, go: t.view });
     });
@@ -1411,6 +1520,7 @@ askView.onMount = function () {
     box.querySelectorAll('[data-sr]').forEach(function (b) {
       b.addEventListener('click', function () {
         var r = results[+b.getAttribute('data-sr')];
+        if (r.subject) UI.subjectCode = r.subject;
         if (r.faq != null) { UI.faqQ = ''; UI.faqCat = 'All'; UI.faqOpen = r.faq; }
         if (r.centre) UI.centreSel = r.centre;
         close(); input.value = ''; go(r.go);
@@ -1426,7 +1536,7 @@ var VIEWS_FN = {
   home: homeView, about: aboutView, login: loginView, contact: contactView,
   dashboard: dashboardView, admin: adminView, faq: faqView, notes: notesView,
   routine: routineView, degree: degreeView, centres: centresView, guide: guideView,
-  reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView, papers: papersView,
+  reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView, papers: papersView, subject: subjectView,
   cgpa: cgpaView, stories: storiesView, health: healthView, ask: askView
 };
 render();
