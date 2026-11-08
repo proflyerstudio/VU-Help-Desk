@@ -138,3 +138,8 @@ footer.site h3{font-family:Fraunces,Georgia,serif;font-size:1.05rem;margin-botto
 footer.site ul{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:.9rem}
 footer.site ul a{color:var(--text);text-decoration:none;font-weight:600}
 footer.site ul a:hover{color:var(--accent);text-decoration:underline}
+/* header search on small screens: full-width second row so phones get search too */
+@media(max-width:899px){
+  .topbar{flex-wrap:wrap}
+  .header-search{display:block;order:10;flex:1 1 100%;max-width:none}
+}

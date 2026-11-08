@@ -45,7 +45,8 @@ var store = {
   messages: function () { return load('messages', []); },
   routines: function () { return load('routines', []); },
   guideDone: function () { return load('guideDone', []); },
-  quizAttempts: function () { return load('quizAttempts', []); }
+  quizAttempts: function () { return load('quizAttempts', []); },
+  papers: function () { return load('papers', []); }
 };
 function counts() {
   return {
@@ -73,6 +74,7 @@ var VIEWS = {
   notes: 'Notes Organizer', routine: 'Routine Builder', degree: 'Degree Progress',
   centres: 'Exam Centers', guide: 'Freshman Guide', reviews: 'Course Reviews',
   gdb: 'GDB Drafter', datesheet: 'Datesheet Scheduler', quiz: 'Quiz Practice',
+  papers: 'Past Papers Guide',
   cgpa: 'CGPA Planner', stories: 'Stories', health: 'Health Desk', ask: 'Ask the Community'
 };
 var TOOLS = [
@@ -89,7 +91,8 @@ var TOOLS = [
   { n: '11', view: 'cgpa', title: 'CGPA Target Planner', blurb: 'See exactly what average — and how many A\u2019s — your target needs.', solves: 'CGPA confusion and guesswork' },
   { n: '12', view: 'stories', title: 'Stories & Confessions', blurb: 'Anonymous distance-learning stories: funny, honest, relatable.', solves: 'Feeling alone in online study' },
   { n: '13', view: 'health', title: 'Health Desk', blurb: 'Posture checks, eye breaks and timers for long study hours.', solves: 'Back pain and screen strain' },
-  { n: '14', view: 'ask', title: 'Ask the Community', blurb: 'Post a question; students and teachers answer from experience.', solves: 'Problems nobody answers' }
+  { n: '14', view: 'ask', title: 'Ask the Community', blurb: 'Post a question; students and teachers answer from experience.', solves: 'Problems nobody answers' },
+  { n: '15', view: 'papers', title: 'Past Papers & Handouts Guide', blurb: 'Where the real handouts and past papers live — and a tracker for every paper you solve.', solves: 'Exam prep with no material' }
 ];
 var view = 'home';
 var UI = {}; // per-view transient state
@@ -124,7 +127,7 @@ function footerHtml() {
     '<div><h3>Student tools</h3><ul>' + toolLinks + '</ul></div>' +
     '<div><h3>More tools & official links</h3><ul>' + toolLinks2 +
     '<li><a href="' + D.VULMS_URL + '" target="_blank" rel="noreferrer">Open VULMS ↗</a></li>' +
-    '<li><a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer">Official VU campus directory ↗</a></li>' +
+    '<li><a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer">Official VU website (vu.edu.pk) ↗</a></li>' +
     '<li><a href="#/about">About this project</a></li><li><a href="#/contact">Contact us</a></li></ul></div></div>' +
     '<p style="margin-top:24px;border-top:2px solid var(--border);padding-top:16px">Made with 💚 for VU students · VU Help Desk · Free to use, no sign-in wall.</p></footer>';
 }
@@ -207,7 +210,7 @@ function homeView() {
   return '<section class="grid lg2" style="align-items:center;gap:32px"><div>' +
     '<span class="chip chip-amber">For Virtual University students, by students</span>' +
     '<h1 class="font-display" style="margin-top:16px;font-size:2.5rem;line-height:1.15;font-weight:900">Every VU problem,<br><span style="color:var(--accent)">one friendly home.</span></h1>' +
-    '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 14 working tools in one place. No Facebook-group archaeology required.</p>' +
+    '<p class="dim" style="margin-top:16px;max-width:32rem;font-size:1.1rem">Deadlines, GDBs, datesheets, CGPA maths, exam centres — the things that stress every Virtual University student, solved with 15 working tools in one place. No Facebook-group archaeology required.</p>' +
     '<div style="margin-top:28px;display:flex;flex-wrap:wrap;gap:12px">' +
     '<button type="button" class="btn-primary" data-go="' + (p ? 'dashboard' : 'login') + '">' + (p ? 'Open my dashboard' : 'Get started — it\u2019s free') + '</button>' +
     '<button type="button" class="btn-ghost" data-go="guide">I\u2019m new — show me the guide</button></div>' +
@@ -535,7 +538,7 @@ function routineView() {
         (u.courses.length > 1 ? '<button type="button" class="btn-danger" data-rcdel="' + i + '">Remove</button>' : '') + '</div></div>';
     }).join('') +
     '<button type="button" class="btn-ghost" style="width:100%" id="rcAdd">+ Add another course</button>' +
-    '<div><label class="field-label" for="rc-hours">Focused study hours per day: ' + u.hoursPerDay + 'h</label><input id="rc-hours" type="range" min="1" max="6" step="0.5" value="' + u.hoursPerDay + '"></div>' +
+    '<div><label class="field-label" id="rc-hours-label" for="rc-hours">Focused study hours per day: ' + u.hoursPerDay + 'h</label><input id="rc-hours" type="range" min="1" max="6" step="0.5" value="' + u.hoursPerDay + '"></div>' +
     '<div><span class="field-label">Study days</span><div style="display:flex;flex-wrap:wrap;gap:8px">' + DAYS.map(function (d) {
       var on = u.studyDays.indexOf(d) !== -1;
       return '<button type="button" class="btn-ghost btn-sm" data-rcday="' + d + '" aria-pressed="' + on + '"' + (on ? ' style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent)"' : '') + '>' + d.slice(0, 3) + '</button>';
@@ -571,7 +574,8 @@ routineView.onMount = function () {
     b.addEventListener('click', function () { syncInputs(); u.courses.splice(+b.getAttribute('data-rcdel'), 1); render(); });
   });
   $('rcAdd').addEventListener('click', function () { syncInputs(); u.courses.push({ name: '', lecturesPerWeek: 3, deadline: '' }); render(); });
-  $('rc-hours').addEventListener('input', function (e) { u.hoursPerDay = +e.target.value; render(); });
+  // Dragging the slider updates only its label — no re-render, so the slider keeps focus.
+  $('rc-hours').addEventListener('input', function (e) { u.hoursPerDay = +e.target.value; var lab = $('rc-hours-label'); if (lab) lab.textContent = 'Focused study hours per day: ' + u.hoursPerDay + 'h'; });
   $('rcGen').addEventListener('click', function () {
     syncInputs();
     var valid = u.courses.filter(function (c) { return c.name.trim(); });
@@ -669,58 +673,79 @@ degreeView.onMount = function () {
 };
 
 /* ---------- Exam centres ---------- */
-function centresView() {
-  UI.centreSearch = UI.centreSearch || ''; UI.centreSel = UI.centreSel || (D.CENTRES[0] && D.CENTRES[0].id);
+function centresGridHtml() {
   var all = visible(store.centreReviews());
   function avgFor(id) { var rs = all.filter(function (r) { return r.centreId === id; }); return rs.length ? rs.reduce(function (s, r) { return s + r.rating; }, 0) / rs.length : null; }
-  var s = UI.centreSearch.toLowerCase().trim();
+  var s = (UI.centreSearch || '').toLowerCase().trim();
   var filtered = D.CENTRES.filter(function (c) { return !s || c.city.toLowerCase().indexOf(s) !== -1 || c.province.toLowerCase().indexOf(s) !== -1; });
+  if (!filtered.length) return empty('No centre matches that search', 'VU has campuses in 100+ cities. Check the official VU website linked below for the complete list.');
+  return filtered.map(function (c) {
+    var avg = avgFor(c.id), isSel = UI.centreSel === c.id;
+    var n = all.filter(function (r) { return r.centreId === c.id; }).length;
+    var needsConfirm = c.address.indexOf('confirm exact') !== -1;
+    return '<button type="button" class="card" data-centre="' + c.id + '" aria-pressed="' + isSel + '" style="padding:20px;text-align:left;color:var(--text)"' + (isSel ? ' data-sel="1"' : '') + '>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><span class="font-display" style="font-size:1.9rem;font-weight:900;color:var(--amber)">' + esc(c.city.slice(0, 2).toUpperCase()) + '</span><span class="chip">' + esc(c.province) + '</span></div>' +
+      '<h3 class="font-display" style="margin-top:8px;font-size:1.25rem">' + esc(c.city) + '</h3><p style="font-weight:600">' + esc(c.campus) + '</p>' +
+      '<p class="dim small" style="margin-top:4px">' + esc(c.address) + '</p>' +
+      (needsConfirm ? '<p style="margin-top:8px"><span class="chip chip-amber">⚠ Exact address still to confirm on vu.edu.pk — check before travelling</span></p>' : '') +
+      '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">' + c.facilities.map(function (f) { return '<span class="chip">' + esc(f) + '</span>'; }).join('') + '</div>' +
+      '<p style="margin-top:12px;font-size:.9rem;font-weight:600;color:var(--accent)">' + (avg != null ? '★ ' + avg.toFixed(1) + ' from ' + n + ' review(s)' : 'No reviews yet — be the first') + '</p></button>';
+  }).join('');
+}
+function centreDetailHtml() {
   var centre = D.CENTRES.find(function (c) { return c.id === UI.centreSel; }) || D.CENTRES[0];
-  var centreReviews = centre ? all.filter(function (r) { return r.centreId === centre.id; }) : [];
-  var p = store.profile();
+  if (!centre) return '';
+  var posted = UI.centreJustPosted; UI.centreJustPosted = false;
+  var all = visible(store.centreReviews());
+  var centreReviews = all.filter(function (r) { return r.centreId === centre.id; });
+  return (posted ? '<div class="note-ok mb" role="status">Review posted — thank you for helping the next batch choose well.</div>' : '') +
+    '<h2 class="font-display" style="font-size:1.5rem">' + esc(centre.city) + ' — reviews</h2><p class="dim small" style="margin-top:4px">' + esc(centre.campus) + '</p>' +
+    '<div style="margin-top:16px;display:grid;gap:12px">' +
+    (centreReviews.length === 0 ? '<p class="dim">No reviews for this centre yet. Sat an exam here? Tell juniors about seating, staff behaviour, load-shedding backup and reaching on time.</p>'
+      : centreReviews.map(function (r) { return '<article style="background:var(--surface-2);border-radius:16px;padding:16px"><div style="display:flex;justify-content:space-between;align-items:center">' + stars(r.rating, 15) + '<span class="dim small">' + fmtDate(r.createdAt) + '</span></div><p style="margin-top:8px">' + esc(r.text) + '</p><p class="dim small" style="margin-top:4px">— ' + esc(r.author) + '</p></article>'; }).join('')) +
+    '</div><form id="centreForm" style="margin-top:20px;display:grid;gap:16px;border-top:2px solid var(--border);padding-top:20px"><h3 class="font-display" style="font-size:1.1rem">Review this centre</h3>' +
+    '<div><label class="field-label" for="cr-rating">Your rating: <span id="cr-rating-val">5</span>/5</label><input id="cr-rating" type="range" min="1" max="5" step="1" value="5"></div>' +
+    '<div><label class="field-label" for="cr-text">Your experience</label><textarea id="cr-text" class="field" placeholder="How were the halls, staff, computers, washrooms, parking…?" required></textarea></div>' +
+    '<div id="crMsg"></div><button type="submit" class="btn-primary" style="width:100%">Post review</button></form>';
+}
+function centresView() {
+  UI.centreSearch = UI.centreSearch || ''; UI.centreSel = UI.centreSel || (D.CENTRES[0] && D.CENTRES[0].id);
   return head('Tool 05 · Exams', 'Exam Center Navigator', 'The problem: a noisy, far or badly managed centre can ruin a paper you prepared for months. Compare real VU campus centres city by city, read student reviews, and choose before you make your datesheet.') +
     '<div style="max-width:28rem;margin-bottom:20px"><label class="field-label" for="centre-search">Find your city</label><input id="centre-search" class="field" value="' + esc(UI.centreSearch) + '" placeholder="Lahore, Karachi, Peshawar…"></div>' +
-    '<div class="grid lg-side" style="gap:24px"><div class="grid sm2" style="gap:16px;align-content:start">' +
-    (filtered.length ? filtered.map(function (c) {
-      var avg = avgFor(c.id), isSel = centre && centre.id === c.id;
-      var n = all.filter(function (r) { return r.centreId === c.id; }).length;
-      return '<button type="button" class="card" data-centre="' + c.id + '" aria-pressed="' + isSel + '" style="padding:20px;text-align:left;color:var(--text)"' + (isSel ? ' data-sel="1"' : '') + '>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center"><span class="font-display" style="font-size:1.9rem;font-weight:900;color:var(--amber)">' + esc(c.city.slice(0, 2).toUpperCase()) + '</span><span class="chip">' + esc(c.province) + '</span></div>' +
-        '<h3 class="font-display" style="margin-top:8px;font-size:1.25rem">' + esc(c.city) + '</h3><p style="font-weight:600">' + esc(c.campus) + '</p>' +
-        '<p class="dim small" style="margin-top:4px">' + esc(c.address) + '</p>' +
-        '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">' + c.facilities.map(function (f) { return '<span class="chip">' + esc(f) + '</span>'; }).join('') + '</div>' +
-        '<p style="margin-top:12px;font-size:.9rem;font-weight:600;color:var(--accent)">' + (avg != null ? '★ ' + avg.toFixed(1) + ' from ' + n + ' review(s)' : 'No reviews yet — be the first') + '</p></button>';
-    }).join('') : empty('No centre matches that search', 'VU has campuses in 100+ cities. Check the official campus directory linked below for the complete list.')) +
-    '</div><div class="card" style="padding:24px;height:fit-content">' + (centre ?
-      '<h2 class="font-display" style="font-size:1.5rem">' + esc(centre.city) + ' — reviews</h2><p class="dim small" style="margin-top:4px">' + esc(centre.campus) + '</p>' +
-      '<div style="margin-top:16px;display:grid;gap:12px">' +
-      (centreReviews.length === 0 ? '<p class="dim">No reviews for this centre yet. Sat an exam here? Tell juniors about seating, staff behaviour, load-shedding backup and reaching on time.</p>'
-        : centreReviews.map(function (r) { return '<article style="background:var(--surface-2);border-radius:16px;padding:16px"><div style="display:flex;justify-content:space-between;align-items:center">' + stars(r.rating, 15) + '<span class="dim small">' + fmtDate(r.createdAt) + '</span></div><p style="margin-top:8px">' + esc(r.text) + '</p><p class="dim small" style="margin-top:4px">— ' + esc(r.author) + '</p></article>'; }).join('')) +
-      '</div><form id="centreForm" style="margin-top:20px;display:grid;gap:16px;border-top:2px solid var(--border);padding-top:20px"><h3 class="font-display" style="font-size:1.1rem">Review this centre</h3>' +
-      '<div><label class="field-label" for="cr-rating">Your rating: <span id="cr-rating-val">5</span>/5</label><input id="cr-rating" type="range" min="1" max="5" step="1" value="5"></div>' +
-      '<div><label class="field-label" for="cr-text">Your experience</label><textarea id="cr-text" class="field" placeholder="How were the halls, staff, computers, washrooms, parking…?" required></textarea></div>' +
-      '<div id="crMsg"></div><button type="submit" class="btn-primary" style="width:100%">Post review</button></form>' : '') +
-    '</div></div>' +
-    '<p class="dim small" style="margin-top:24px">Addresses are from VU\u2019s published campus information. Centres can move — verify yours in the <a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer"><b>official VU campus directory</b></a> before exam day.</p>';
+    '<div class="grid lg-side" style="gap:24px"><div class="grid sm2" id="centreGrid" style="gap:16px;align-content:start">' + centresGridHtml() + '</div>' +
+    '<div class="card" id="centreDetail" style="padding:24px;height:fit-content">' + centreDetailHtml() + '</div></div>' +
+    '<p class="dim small" style="margin-top:24px">Addresses are from VU\u2019s published campus information. Centres can move — verify yours on the <a href="' + D.VU_OFFICIAL_CAMPUS_URL + '" target="_blank" rel="noreferrer"><b>official VU website (vu.edu.pk)</b></a> — search for \u201cVirtual Campuses\u201d there — before exam day.</p>';
 }
 centresView.onMount = function () {
   var s = $('centre-search'); if (!s) return;
-  s.addEventListener('input', function () { UI.centreSearch = s.value; render(); });
-  document.querySelectorAll('[data-centre]').forEach(function (b) {
-    b.addEventListener('click', function () { UI.centreSel = b.getAttribute('data-centre'); render(); });
-  });
-  var r = $('cr-rating');
-  if (r) r.addEventListener('input', function () { $('cr-rating-val').textContent = r.value; });
-  var f = $('centreForm');
-  if (f) f.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var text = $('cr-text').value.trim(); if (!text) return;
-    var arr = store.centreReviews();
-    arr.unshift({ id: uid(), centreId: UI.centreSel, rating: +$('cr-rating').value, text: text, author: (store.profile() && store.profile().name) || 'Anonymous', createdAt: new Date().toISOString(), status: 'approved' });
-    save('centreReviews', arr);
-    $('crMsg').innerHTML = '<div class="note-ok" role="status">Review posted — thank you for helping the next batch choose well.</div>';
-    $('cr-text').value = ''; render();
-  });
+  function refreshLists() {
+    var g = $('centreGrid'), d = $('centreDetail');
+    if (g) g.innerHTML = centresGridHtml();
+    if (d) d.innerHTML = centreDetailHtml();
+    bindCards(); bindDetailForm();
+  }
+  function bindCards() {
+    document.querySelectorAll('[data-centre]').forEach(function (b) {
+      b.addEventListener('click', function () { UI.centreSel = b.getAttribute('data-centre'); refreshLists(); });
+    });
+  }
+  function bindDetailForm() {
+    var r = $('cr-rating');
+    if (r) r.addEventListener('input', function () { $('cr-rating-val').textContent = r.value; });
+    var f = $('centreForm');
+    if (f) f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = $('cr-text').value.trim(); if (!text) return;
+      var arr = store.centreReviews();
+      arr.unshift({ id: uid(), centreId: UI.centreSel, rating: +$('cr-rating').value, text: text, author: (store.profile() && store.profile().name) || 'Anonymous', createdAt: new Date().toISOString(), status: 'approved' });
+      save('centreReviews', arr);
+      UI.centreJustPosted = true;
+      render();
+    });
+  }
+  // Typing in the search updates only the lists below — the input keeps focus.
+  s.addEventListener('input', function () { UI.centreSearch = s.value; refreshLists(); });
+  bindCards(); bindDetailForm();
 };
 
 /* ---------- Freshman guide ---------- */
@@ -923,7 +948,7 @@ function datesheetView() {
   var list = store.datesheet();
   var days = [];
   var base = new Date(UI.dsStart + 'T00:00:00');
-  if (!isNaN(base.getTime())) for (var i = 0; i < 10; i++) { var d = new Date(base); d.setDate(base.getDate() + i); days.push(d.toISOString().slice(0, 10)); }
+  if (!isNaN(base.getTime())) for (var i = 0; i < 14; i++) { var d = new Date(base); d.setDate(base.getDate() + i); days.push(d.toISOString().slice(0, 10)); }
   function dayLoad(date) { return list.filter(function (x) { return x.examDate === date; }).length; }
   var clash = list.some(function (x) { return list.some(function (y) { return y.id !== x.id && y.examDate === x.examDate && y.session === x.session; }); });
   var heavyDays = days.filter(function (d) { return dayLoad(d) >= 2; });
@@ -953,7 +978,7 @@ function datesheetView() {
               }).join('')) + '</div>';
         }).join('') + '</div>';
     }).join('') + '</div>' +
-    (outside.length ? '<div class="card mt" style="padding:20px"><h2 class="font-display" style="font-size:1.1rem">Subjects outside this 10-day window</h2><ul class="mt" style="display:grid;gap:6px">' + outside.map(function (it) { return '<li style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.9rem"><span><strong>' + esc(it.courseCode) + '</strong> — ' + esc(it.examDate) + ' · ' + esc(it.session) + '</span><button type="button" class="btn-danger" data-delds="' + it.id + '">Remove</button></li>'; }).join('') + '</ul></div>' : '') +
+    (outside.length ? '<div class="card mt" style="padding:20px"><h2 class="font-display" style="font-size:1.1rem">Subjects outside this 14-day window</h2><ul class="mt" style="display:grid;gap:6px">' + outside.map(function (it) { return '<li style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.9rem"><span><strong>' + esc(it.courseCode) + '</strong> — ' + esc(it.examDate) + ' · ' + esc(it.session) + '</span><button type="button" class="btn-danger" data-delds="' + it.id + '">Remove</button></li>'; }).join('') + '</ul></div>' : '') +
     (list.length === 0 ? '<div class="mt">' + empty('No subjects yet', 'Add every subject you\u2019re taking this semester, then drag them into a plan with breathing room before the tough ones.') + '</div>' : '');
 }
 datesheetView.onMount = function () {
@@ -1006,8 +1031,8 @@ function quizView() {
   var attempts = store.quizAttempts();
   var html = head('Tool 10 · Practice', 'Quiz Practice Engine', 'The problem: real VULMS quizzes are timed and unforgiving — the first time you feel that pressure should not be when marks are on the line. Practice here: 30 seconds per question, no pausing.');
   if (!u.started && !u.finished) {
-    html += '<div class="card" style="padding:24px;display:grid;gap:20px"><div><label class="field-label" for="quiz-subject">Practice set</label><select id="quiz-subject" class="field">' + subjects.map(function (s) { return '<option' + (u.subject === s ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
-      '<ul style="list-style:disc;padding-left:24px;color:var(--dim);display:grid;gap:4px"><li>10 questions, ' + QUIZ_SECONDS_PER_Q + ' seconds each — just like the real pressure.</li><li>Questions are sample practice questions written for this site, in the style of VU course basics.</li><li>Your attempts are saved in this browser so you can watch yourself get faster.</li></ul>' +
+    html += '<div class="card" style="padding:24px;display:grid;gap:20px"><div><label class="field-label" for="quiz-subject">Practice set</label><select id="quiz-subject" class="field">' + subjects.map(function (s) { var n = s === 'Mixed (all subjects)' ? D.QUIZ_BANK.length : D.QUIZ_BANK.filter(function (q) { return q.subject === s; }).length; return '<option value="' + esc(s) + '"' + (u.subject === s ? ' selected' : '') + '>' + esc(s) + ' (' + n + ' question' + (n === 1 ? '' : 's') + ')</option>'; }).join('') + '</select></div>' +
+      '<ul style="list-style:disc;padding-left:24px;color:var(--dim);display:grid;gap:4px"><li>Up to 10 questions, ' + QUIZ_SECONDS_PER_Q + ' seconds each — just like the real pressure.</li><li>Questions are sample practice questions written for this site, in the style of VU course basics.</li><li>Your attempts are saved in this browser so you can watch yourself get faster.</li></ul>' +
       '<button type="button" class="btn-primary" style="width:100%" id="quizStart">Start practice quiz</button></div>';
   }
   if (u.started && u.questions[u.idx]) {
@@ -1081,10 +1106,59 @@ quizView.onMount = function () {
   }
 };
 
+/* ---------- Past papers & handouts guide ---------- */
+var PAPER_TYPES = ['Midterm paper', 'Final term paper', 'Quiz paper'];
+function papersView() {
+  var list = store.papers();
+  var scored = list.filter(function (p) { return p.total > 0; });
+  var avg = scored.length ? Math.round(scored.reduce(function (s, p) { return s + (p.correct / p.total * 100); }, 0) / scored.length) : null;
+  return head('Tool 15 · Exam prep', 'Past Papers & Handouts Guide', 'The problem: students revise from random screenshots and never know which papers they have actually solved. Here is where the real material lives — and a tracker so every paper you finish counts.') +
+    '<div class="grid lg-side2" style="gap:24px"><div style="display:grid;gap:16px;align-content:start">' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">1 · Start with the official handouts</h2><p style="margin-top:8px">Every VU course has an official handout (PDF) in the Downloads section of that course on VULMS. Download all of them at the start of the semester — they are the syllabus, and exam questions come from them, not from random notes.</p><div style="margin-top:12px"><a class="btn-primary" href="' + D.VULMS_URL + '" target="_blank" rel="noreferrer">Open VULMS — course downloads ↗</a></div></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">2 · Where real past papers live</h2><ul style="margin-top:8px;list-style:disc;padding-left:24px;display:grid;gap:6px"><li><strong>Your seniors</strong> — ask in Ask the Community here, or your program\u2019s student group, for the last 2–3 semesters\u2019 papers of your exact course code.</li><li><strong>Your campus</strong> — many VU campuses keep paper collections and notice-board copies; ask the campus help desk.</li><li><strong>Your own solved papers</strong> — the tracker on this page is your personal bank: log each paper you solve and your score, and it grows into revision material for finals.</li></ul><p class="dim small" style="margin-top:8px">This site does not host paper files — papers change every semester, and a stale \u201csolved\u201d file teaches the wrong answers. Use the sources above for the current ones.</p></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">3 · How to use a paper properly</h2><ol style="margin-top:8px;list-style:decimal;padding-left:24px;display:grid;gap:6px"><li>Solve it <strong>timed</strong> — midterm 60–90 minutes, final as per your datesheet slot — no handout open.</li><li>Mark it against the handout, not against a friend\u2019s memory.</li><li>Write down every question you got wrong and the lecture number it came from.</li><li>Re-solve the wrong ones a week later. That second pass is where the marks are.</li><li>Log it in the tracker — seeing \u201c7 papers solved, 82% average\u201d is the best pre-exam confidence there is.</li></ol></div>' +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">⚠ What to avoid</h2><ul style="margin-top:8px;list-style:disc;padding-left:24px;display:grid;gap:6px"><li>Don\u2019t buy \u201c100% solved / guaranteed\u201d paper packs — they are usually wrong, outdated, or both.</li><li>Don\u2019t use tools that auto-solve quizzes or skip lectures for you — VU penalises it, and you learn nothing for the final.</li><li>Don\u2019t trust an answer key you can\u2019t check against the handout.</li></ul></div></div>' +
+    '<div style="display:grid;gap:16px;align-content:start">' +
+    '<div class="grid sm2" style="gap:16px">' + stat('Papers solved', String(list.length), 'Logged in this browser') + stat('Average score', avg == null ? '—' : avg + '%', scored.length ? 'Across ' + scored.length + ' scored paper(s)' : 'Add a score to see it') + '</div>' +
+    '<form class="card" style="padding:24px;display:grid;gap:16px" id="paperForm"><h2 class="font-display" style="font-size:1.25rem">Log a paper you solved</h2>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="pp-code">Course code</label><input id="pp-code" class="field" placeholder="CS101" required></div>' +
+    '<div><label class="field-label" for="pp-type">Paper type</label><select id="pp-type" class="field">' + PAPER_TYPES.map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></div></div>' +
+    '<div><label class="field-label" for="pp-term">Semester / session</label><input id="pp-term" class="field" placeholder="e.g. Fall 2025 midterm"></div>' +
+    '<div class="grid g2" style="gap:12px"><div><label class="field-label" for="pp-correct">Questions right (optional)</label><input id="pp-correct" type="number" min="0" max="200" class="field" placeholder="e.g. 41"></div>' +
+    '<div><label class="field-label" for="pp-total">Out of (optional)</label><input id="pp-total" type="number" min="1" max="200" class="field" placeholder="e.g. 50"></div></div>' +
+    '<div id="ppMsg"></div><button type="submit" class="btn-primary" style="width:100%">Save to my paper bank</button></form>' +
+    '<div><h2 class="font-display" style="font-size:1.25rem;margin-bottom:12px">My paper bank</h2>' +
+    (list.length === 0 ? empty('No papers logged yet', 'Solve a past paper, log it here with your score, and watch this list — and your average — grow through the semester.')
+      : list.map(function (p) {
+        var pct = p.total > 0 ? Math.round(p.correct / p.total * 100) : null;
+        return '<article class="card mb" style="padding:16px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><p style="font-weight:700">' + esc(p.courseCode) + ' <span class="dim">· ' + esc(p.paperType) + (p.term ? ' · ' + esc(p.term) : '') + '</span></p>' + (pct != null ? '<span class="chip chip-amber">' + pct + '% (' + p.correct + '/' + p.total + ')</span>' : '<span class="chip">Solved</span>') + '</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span class="dim small">' + fmtDate(p.createdAt) + '</span><button type="button" class="btn-danger" data-delpaper="' + p.id + '">Remove</button></div></article>';
+      }).join('')) + '</div></div></div>';
+}
+papersView.onMount = function () {
+  var f = $('paperForm'); if (!f) return;
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var code = $('pp-code').value.trim().toUpperCase(); if (!code) return;
+    var correct = +$('pp-correct').value || 0, total = +$('pp-total').value || 0;
+    if (total > 0 && correct > total) { $('ppMsg').innerHTML = '<div class="note-warn" role="alert">\u201cQuestions right\u201d can\u2019t be more than \u201cOut of\u201d.</div>'; return; }
+    var arr = store.papers();
+    arr.unshift({ id: uid(), courseCode: code, paperType: $('pp-type').value, term: $('pp-term').value.trim(), correct: correct, total: total, createdAt: new Date().toISOString() });
+    save('papers', arr); render();
+  });
+  document.querySelectorAll('[data-delpaper]').forEach(function (b) {
+    b.addEventListener('click', function () { del('papers', b.getAttribute('data-delpaper')); });
+  });
+};
+
 /* ---------- CGPA planner ---------- */
-function cgpaView() {
-  UI.cgpa = UI.cgpa || { currentCgpa: 2.6, creditsDone: 66, creditsLeft: 66, target: 3.2, creditsPerCourse: 3 };
-  var u = UI.cgpa;
+function cgpaLabelText(key, u) {
+  if (key === 'currentCgpa') return 'Current CGPA: ' + u.currentCgpa.toFixed(2);
+  if (key === 'creditsDone') return 'Credit hours completed: ' + u.creditsDone;
+  if (key === 'creditsLeft') return 'Credit hours remaining: ' + u.creditsLeft;
+  if (key === 'target') return 'Target CGPA: ' + u.target.toFixed(2);
+  return 'Average credits per course: ' + u.creditsPerCourse;
+}
+function cgpaResultsHtml(u) {
   var total = u.creditsDone + u.creditsLeft;
   var required = u.creditsLeft > 0 ? (u.target * total - u.currentCgpa * u.creditsDone) / u.creditsLeft : 0;
   var coursesLeft = Math.max(1, Math.round(u.creditsLeft / u.creditsPerCourse));
@@ -1095,6 +1169,20 @@ function cgpaView() {
     : required > 4 ? { text: 'Mathematically out of reach in the remaining credits — even straight A\u2019s can\u2019t pull it there. Set the target lower, or extend it: repeating your lowest-grade courses replaces weak grades and is the fastest legal way to raise a CGPA.', bg: 'var(--coral-soft)' }
     : required > 3.67 ? { text: 'Possible, but only with a near-perfect run. Treat every course like it matters — because at this target, it does.', bg: 'var(--coral-soft)' }
     : { text: 'Achievable with a strong, planned semester. Use the A/B mix below as your personal contract.', bg: 'var(--accent-soft)' };
+  return '<div class="card" style="padding:24px;text-align:center"><p class="small" style="font-weight:600;color:var(--dim)">Average GPA you must score on every remaining credit</p>' +
+    '<p class="font-display" style="margin-top:4px;font-size:3.75rem;font-weight:900;color:' + (required > 4 ? 'var(--coral)' : 'var(--accent)') + '">' + (u.creditsLeft > 0 ? required.toFixed(2) : '—') + '</p>' +
+    '<p class="dim">out of 4.00, across ' + u.creditsLeft + ' remaining credit hours (' + coursesLeft + ' courses)</p></div>' +
+    '<div style="background:' + verdict.bg + ';border-radius:var(--radius);padding:20px" role="status"><p style="font-weight:500">' + verdict.text + '</p></div>' +
+    (required <= 4 && required > 3 ? '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Your A/B contract</h2><p style="margin-top:8px">If your remaining ' + coursesLeft + ' courses split between A\u2019s (4.00) and B\u2019s (3.00), you need at least <strong style="color:var(--accent)">' + aCourses + ' A\u2019s</strong> and can afford <strong>' + bCourses + ' B\u2019s</strong> — anything below a B must be balanced by another A.</p></div>' : '') +
+    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">What-if scenarios</h2><ul class="list-divide" style="margin-top:12px;list-style:none;padding:0;margin-bottom:0">' +
+    D.GRADE_SCALE.slice(0, 6).map(function (g) { return '<li style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>If every remaining course is a <strong>' + g.grade + '</strong> (' + g.points.toFixed(2) + ')</span><span class="chip chip-amber">Final CGPA ' + scenario(g.points) + '</span></li>'; }).join('') +
+    '</ul><p class="dim small" style="margin-top:12px">Calculated on VU\u2019s standard grade-point scale. Remember VU also applies relative grading, and an F\u2019s credits stay in the denominator until the course is passed.</p></div>';
+}
+function cgpaView() {
+  UI.cgpa = UI.cgpa || { currentCgpa: 2.6, creditsDone: 66, creditsLeft: 66, target: 3.2, creditsPerCourse: 3 };
+  var u = UI.cgpa;
+  var ds = degreeStats();
+  var hasDegree = ds.courses.length > 0;
   var sliders = [
     ['cg-cur', 'Current CGPA: ' + u.currentCgpa.toFixed(2), u.currentCgpa, 0, 4, 0.05, 'currentCgpa'],
     ['cg-done', 'Credit hours completed: ' + u.creditsDone, u.creditsDone, 0, 300, 1, 'creditsDone'],
@@ -1104,20 +1192,30 @@ function cgpaView() {
   ];
   return head('Tool 11 · Grades', 'CGPA Target Planner', 'The problem: \u2018I need a 3.2\u2019 is a wish, not a plan. Enter where you are and where you want to be — this planner converts it into the exact average, and the exact number of A\u2019s, your remaining courses demand.') +
     '<div class="grid lg-side2" style="gap:24px"><div class="card" style="padding:24px;height:fit-content;display:grid;gap:20px">' +
-    sliders.map(function (f) { return '<div><label class="field-label" for="' + f[0] + '">' + f[1] + '</label><input id="' + f[0] + '" type="range" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[2] + '" data-cg="' + f[6] + '"></div>'; }).join('') +
+    (hasDegree ? '<button type="button" class="btn-ghost" id="cgUseDegree" style="width:100%">↩ Use my Degree Dashboard data — CGPA ' + ds.cgpa.toFixed(2) + ', ' + ds.done + ' credits done</button>' : '') +
+    sliders.map(function (f) { return '<div><label class="field-label" id="cg-lab-' + f[6] + '" for="' + f[0] + '">' + f[1] + '</label><input id="' + f[0] + '" type="range" min="' + f[3] + '" max="' + f[4] + '" step="' + f[5] + '" value="' + f[2] + '" data-cg="' + f[6] + '"></div>'; }).join('') +
     '<p class="dim small">Tip: your exact CGPA and credits are in your VULMS grade book — and the Degree Dashboard here computes them from your courses automatically.</p></div>' +
-    '<div style="display:grid;gap:20px;align-content:start"><div class="card" style="padding:24px;text-align:center"><p class="small" style="font-weight:600;color:var(--dim)">Average GPA you must score on every remaining credit</p>' +
-    '<p class="font-display" style="margin-top:4px;font-size:3.75rem;font-weight:900;color:' + (required > 4 ? 'var(--coral)' : 'var(--accent)') + '">' + (u.creditsLeft > 0 ? required.toFixed(2) : '—') + '</p>' +
-    '<p class="dim">out of 4.00, across ' + u.creditsLeft + ' remaining credit hours (' + coursesLeft + ' courses)</p></div>' +
-    '<div style="background:' + verdict.bg + ';border-radius:var(--radius);padding:20px" role="status"><p style="font-weight:500">' + verdict.text + '</p></div>' +
-    (required <= 4 && required > 3 ? '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">Your A/B contract</h2><p style="margin-top:8px">If your remaining ' + coursesLeft + ' courses split between A\u2019s (4.00) and B\u2019s (3.00), you need at least <strong style="color:var(--accent)">' + aCourses + ' A\u2019s</strong> and can afford <strong>' + bCourses + ' B\u2019s</strong> — anything below a B must be balanced by another A.</p></div>' : '') +
-    '<div class="card" style="padding:24px"><h2 class="font-display" style="font-size:1.25rem">What-if scenarios</h2><ul class="list-divide" style="margin-top:12px;list-style:none;padding:0;margin-bottom:0">' +
-    D.GRADE_SCALE.slice(0, 6).map(function (g) { return '<li style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>If every remaining course is a <strong>' + g.grade + '</strong> (' + g.points.toFixed(2) + ')</span><span class="chip chip-amber">Final CGPA ' + scenario(g.points) + '</span></li>'; }).join('') +
-    '</ul><p class="dim small" style="margin-top:12px">Calculated on VU\u2019s standard grade-point scale. Remember VU also applies relative grading, and an F\u2019s credits stay in the denominator until the course is passed.</p></div></div></div>';
+    '<div id="cgpaResults" style="display:grid;gap:20px;align-content:start">' + cgpaResultsHtml(u) + '</div></div>';
 }
 cgpaView.onMount = function () {
+  var useBtn = $('cgUseDegree');
+  if (useBtn) useBtn.addEventListener('click', function () {
+    var ds = degreeStats();
+    UI.cgpa.currentCgpa = Math.round(ds.cgpa * 100) / 100;
+    UI.cgpa.creditsDone = ds.done;
+    UI.cgpa.creditsLeft = Math.max(1, ds.settings.totalCredits - ds.done);
+    UI.cgpa.target = ds.settings.targetCgpa;
+    render();
+  });
   document.querySelectorAll('[data-cg]').forEach(function (el) {
-    el.addEventListener('input', function () { UI.cgpa[el.getAttribute('data-cg')] = +el.value; render(); });
+    // Dragging a slider updates only its label and the results panel — no full
+    // re-render, so the slider keeps focus and position while dragging.
+    el.addEventListener('input', function () {
+      var key = el.getAttribute('data-cg');
+      UI.cgpa[key] = +el.value;
+      var lab = $('cg-lab-' + key); if (lab) lab.textContent = cgpaLabelText(key, UI.cgpa);
+      var res = $('cgpaResults'); if (res) res.innerHTML = cgpaResultsHtml(UI.cgpa);
+    });
   });
 };
 
@@ -1328,7 +1426,7 @@ var VIEWS_FN = {
   home: homeView, about: aboutView, login: loginView, contact: contactView,
   dashboard: dashboardView, admin: adminView, faq: faqView, notes: notesView,
   routine: routineView, degree: degreeView, centres: centresView, guide: guideView,
-  reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView,
+  reviews: reviewsView, gdb: gdbView, datesheet: datesheetView, quiz: quizView, papers: papersView,
   cgpa: cgpaView, stories: storiesView, health: healthView, ask: askView
 };
 render();

@@ -11,19 +11,21 @@ repository, with no server and no database.
 
 ## What's inside
 
-- **20 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
+- **21 pages/views:** Home, About Us, Login, Contact Us, Student Dashboard,
   Teacher Dashboard, Admin Dashboard, Admin Panel, FAQ Top 50, Notes
   Organizer, Routine Builder, Degree Progress, Exam Centers, Freshman Guide,
-  Course Reviews, GDB Drafter, Datesheet Scheduler, Quiz Practice, CGPA
-  Planner, Stories, Health Desk, Ask the Community.
-- **All 14 tools work client-side** (the original 13 plus Ask the Community):
-  searchable FAQ (all 50 questions), notes by course/lecture, weekly routine
-  builder, degree progress with real CGPA maths on the VU grade scale, exam
-  centre navigator, freshman guide with saved progress, course reviews with
-  difficulty scores, GDB drafter with live character/word counts, datesheet
-  scheduler with clash detection, timed quiz practice (16-question bank),
-  CGPA target planner, stories, and the health desk (posture check,
-  20-20-20 eye timer, focus/break timer, desk stretch).
+  Course Reviews, GDB Drafter, Datesheet Scheduler, Quiz Practice, Past
+  Papers Guide, CGPA Planner, Stories, Health Desk, Ask the Community.
+- **All 15 tools work client-side** (the original 13 plus Ask the Community
+  and the Past Papers & Handouts Guide): searchable FAQ (all 50 questions),
+  notes by course/lecture, weekly routine builder, degree progress with real
+  CGPA maths on the VU grade scale, exam centre navigator, freshman guide
+  with saved progress, course reviews with difficulty scores, GDB drafter
+  with live character/word counts, datesheet scheduler (14-day window) with
+  clash detection, timed quiz practice (34-question bank), past-papers guide
+  with a solved-paper tracker, CGPA target planner (can import your Degree
+  Dashboard data), stories, and the health desk (posture check, 20-20-20
+  eye timer, focus/break timer, desk stretch).
 - **Separate dashboards** for Student, Teacher and Admin, plus a separate
   **Admin Panel** (contact inbox; approve / reject / delete course reviews,
   stories, questions and centre reviews).
@@ -61,9 +63,8 @@ No build step, no dependencies, no environment variables.
 | --- | --- |
 | `index.html` | App shell: branded header (logo, search, theme toggle, login), sidebar + mobile menu, bottom quick-nav |
 | `assets/css/style.css` | Full theme + responsive layout (emerald/amber/ink, light/dark) |
-| `assets/js/data.js` | Reference content copied exactly from the original site: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 16-question quiz bank |
+| `assets/js/data.js` | Reference content copied exactly from the original site: 50 FAQs, 14 exam centres, VU grade scale, 10-step freshman guide, 34-question quiz bank |
 | `assets/js/app.js` | The whole app: routing, all 20 views, all tools, localStorage persistence, admin moderation |
-| `assets/hero.webp` | Home-page hero illustration |
 | `vercel.json` | Static-hosting config for Vercel |
 
 ## Honesty notes
@@ -72,8 +73,11 @@ No build step, no dependencies, no environment variables.
   access any real VU account.
 - Exam-centre addresses are reproduced exactly as published by the original
   site, including any "(confirm exact address on vu.edu.pk campus list)"
-  notes. Centres can move — always verify in the
-  [official VU campus directory](https://www.vu.edu.pk/PVCs/Default?type=Private)
-  before exam day.
+  notes. Centres can move — always verify on the
+  [official VU website](https://www.vu.edu.pk/) (search for "Virtual
+  Campuses" there) before exam day. Note: the old deep link to the VU campus
+  directory (`vu.edu.pk/PVCs/Default?type=Private`) returned a 404 on a
+  direct check on 2026-11-08, so the site now links to the verified VU
+  homepage instead of a dead deep link.
 - This is a student help project, **not** an official VU website. Confirm
   fees, dates and rules on VULMS and vu.edu.pk.

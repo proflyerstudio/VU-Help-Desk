@@ -148,6 +148,25 @@ const QUIZ_BANK = [
   { subject: "STA301 · Statistics", q: "The middle value of an ordered data set is called the:", options: ["Mean", "Mode", "Median", "Range"], answer: 2, explain: "The median is the middle value when data is arranged in order." },
   { subject: "CS201 · Programming", q: "In C++, which symbol ends most statements?", options: [".", ",", ";", ":"], answer: 2, explain: "Statements in C++ end with a semicolon." },
   { subject: "CS201 · Programming", q: "Which loop runs at least once even if the condition is false?", options: ["for loop", "while loop", "do-while loop", "foreach loop"], answer: 2, explain: "A do-while loop checks its condition after the first execution." },
+  // ---- Added 2026-11-08: 18 more original practice questions (3 per subject) ----
+  { subject: "CS101 · Computer Science", q: "Which of these is an operating system?", options: ["Microsoft Word", "Windows", "Google Chrome", "Adobe Reader"], answer: 1, explain: "Windows is an operating system; the others are applications that run on one." },
+  { subject: "CS101 · Computer Science", q: "What does WWW stand for?", options: ["World Wide Web", "World Web Window", "Wide World Web", "Web World Wide"], answer: 0, explain: "WWW = World Wide Web, the system of linked pages on the internet." },
+  { subject: "CS101 · Computer Science", q: "Which storage unit is the largest?", options: ["Kilobyte", "Megabyte", "Gigabyte", "Byte"], answer: 2, explain: "1 Gigabyte = 1024 Megabytes, so it is the largest of the four." },
+  { subject: "MTH101 · Mathematics", q: "What is 15% of 200?", options: ["20", "25", "30", "45"], answer: 2, explain: "15% of 200 = 0.15 × 200 = 30." },
+  { subject: "MTH101 · Mathematics", q: "If 2x + 6 = 14, what is x?", options: ["3", "4", "5", "7"], answer: 1, explain: "2x = 14 − 6 = 8, so x = 4." },
+  { subject: "MTH101 · Mathematics", q: "What is the square root of 144?", options: ["11", "12", "13", "14"], answer: 1, explain: "12 × 12 = 144, so √144 = 12." },
+  { subject: "ENG101 · English", q: "What is the past tense of 'go'?", options: ["Goed", "Went", "Gone to", "Going"], answer: 1, explain: "'Go' is irregular: its past tense is 'went'." },
+  { subject: "ENG101 · English", q: "Which word is an adjective?", options: ["Quickly", "Happiness", "Happy", "Run"], answer: 2, explain: "'Happy' describes a noun; 'quickly' is an adverb, 'happiness' a noun, 'run' a verb." },
+  { subject: "ENG101 · English", q: "Choose the correct spelling:", options: ["Recieve", "Receive", "Receeve", "Recive"], answer: 1, explain: "'Receive' follows the rule 'i before e, except after c'." },
+  { subject: "MGT101 · Management", q: "Who is known as the father of scientific management?", options: ["Henri Fayol", "Frederick Taylor", "Max Weber", "Elton Mayo"], answer: 1, explain: "Frederick Taylor developed scientific management in the early 1900s." },
+  { subject: "MGT101 · Management", q: "Which management function checks whether work matches the plan?", options: ["Planning", "Organising", "Leading", "Controlling"], answer: 3, explain: "Controlling means measuring performance and correcting it against the plan." },
+  { subject: "MGT101 · Management", q: "A manager who makes all decisions alone uses which leadership style?", options: ["Democratic", "Laissez-faire", "Autocratic", "Participative"], answer: 2, explain: "Autocratic leadership keeps all decision-making with the leader." },
+  { subject: "STA301 · Statistics", q: "What is the probability of getting heads in one fair coin toss?", options: ["1/4", "1/3", "1/2", "1"], answer: 2, explain: "One favourable outcome (heads) out of two equally likely outcomes = 1/2." },
+  { subject: "STA301 · Statistics", q: "What is the mode of 2, 3, 3, 5, 7?", options: ["2", "3", "5", "7"], answer: 1, explain: "The mode is the most frequent value — 3 appears twice." },
+  { subject: "STA301 · Statistics", q: "What is the range of 5, 9, 3 and 12?", options: ["7", "8", "9", "12"], answer: 2, explain: "Range = largest − smallest = 12 − 3 = 9." },
+  { subject: "CS201 · Programming", q: "Which keyword declares a constant in C++?", options: ["static", "const", "final", "constant"], answer: 1, explain: "const makes a variable read-only after it is initialised." },
+  { subject: "CS201 · Programming", q: "Which operator assigns a value to a variable in C++?", options: ["==", "=", "!=", "=>"], answer: 1, explain: "A single '=' assigns; '==' compares two values." },
+  { subject: "CS201 · Programming", q: "Which header file is needed for cout and cin in C++?", options: ["stdio.h", "iostream", "conio.h", "string.h"], answer: 1, explain: "cout and cin are declared in <iostream>." },
 ];
 
 const STORY_TAGS = [
@@ -183,6 +202,11 @@ const PROGRAMS = [
   "Other",
 ];
 
-const VU_OFFICIAL_CAMPUS_URL = "https://www.vu.edu.pk/PVCs/Default?type=Private";
+/* NOTE (2026-11-08): the old deep link https://www.vu.edu.pk/PVCs/Default?type=Private
+   returns a genuine IIS 404 on a direct fetch (checked with curl, browser UA and
+   plain UA). The VU homepage below was verified HTTP 200 the same day, so the
+   site links there and tells students to search "Virtual Campuses" on vu.edu.pk.
+   If VU restores the directory deep link, point this constant back at it. */
+const VU_OFFICIAL_CAMPUS_URL = "https://www.vu.edu.pk/";
 const VULMS_URL = "https://vulms.vu.edu.pk";
 window.VU_DATA = { FAQS, FAQ_CATEGORIES, GRADE_SCALE, GRADE_POINTS, CENTRES, GUIDE_STEPS, QUIZ_BANK, STORY_TAGS, QUESTION_CATEGORIES, PROGRAMS, VU_OFFICIAL_CAMPUS_URL, VULMS_URL };
