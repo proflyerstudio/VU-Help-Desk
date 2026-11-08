@@ -151,6 +151,27 @@ function footerHtml() {
     '<li><a href="#/terms">Terms &amp; Conditions</a></li></ul></div></div>' +
     '<div class="foot-bottom"><span>© 2026 VU Help Desk</span><span>Made for Virtual University students</span></div></footer>';
 }
+/* Desktop sidebar menu (VULMS-style): one icon + one label per row, no numbers,
+   no group headings. The mobile menu keeps the full grouped list (navHtml). */
+function sidebarHtml() {
+  var p = store.profile();
+  var items = [
+    ['home', '⌂', 'Home'], ['subject', '▦', 'Subjects'], ['routine', '🗓', 'Study Planner'],
+    ['notes', '✎', 'Notes & Handouts'], ['quiz', '⏱', 'Quiz Practice'], ['cgpa', '▤', 'CGPA Planner'],
+    ['datesheet', '▦', 'Datesheet Scheduler'], ['assignments', '✎', 'Assignments & GDB Guide'],
+    ['papers', '▤', 'Past Papers'], ['faq', '?', 'FAQ'], ['centres', '⌖', 'Exam Centres'],
+    [p ? 'dashboard' : 'login', '👤', p ? 'My Account' : 'Login / Sign Up']
+  ];
+  var h = items.map(function (x) {
+    var on = view === x[0] || (x[0] === 'login' && view === 'login') || (x[0] === 'dashboard' && view === 'dashboard');
+    return '<button type="button" class="nav-item' + (on ? ' active' : '') + '" data-go="' + x[0] + '"' +
+      (on ? ' aria-current="page"' : '') + '><span class="ic" aria-hidden="true">' + x[1] + '</span>' + esc(x[2]) + '</button>';
+  }).join('');
+  if (p && p.role === 'admin') {
+    h += '<button type="button" class="nav-item' + (view === 'admin' ? ' active' : '') + '" data-go="admin"><span class="ic" aria-hidden="true">⚙</span>Admin Panel</button>';
+  }
+  return h;
+}
 function navHtml() {
   var p = store.profile();
   function item(v, label) {
@@ -175,7 +196,7 @@ function renderShell() {
     b.classList.toggle('active', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
-  $('sideNav').innerHTML = navHtml();
+  $('sideNav').innerHTML = sidebarHtml();
   $('mobileMenu').innerHTML = navHtml();
   var p = store.profile();
   $('profileBtn').innerHTML = p
