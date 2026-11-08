@@ -379,11 +379,10 @@ loginView.onMount = function () {
     if (u.mode === 'signup') {
       if (!u.name.trim()) { u.error = 'Please enter your name.'; render(); return; }
       if (accounts.some(function (a) { return a.email === email; })) { u.error = 'An account with this email already exists — switch to Login instead.'; render(); return; }
-      /* Roles are never picked on Sign Up: every new account is a Student,
-         except the first account while the site has no Admin yet — that
-         account becomes the Admin (the site owner). */
-      var hasAdmin = accounts.some(function (a) { return a.role === 'admin'; });
-      var role = hasAdmin ? 'student' : 'admin';
+      /* Roles are never picked on Sign Up: every new account is a Student.
+         Admin access is closed — nobody can sign up as Admin any more.
+         The existing Admin account keeps its access. */
+      var role = 'student';
       var acc = { id: uid(), name: u.name.trim(), email: email, passHash: pwHash(u.password), role: role, program: u.program, createdAt: new Date().toISOString() };
       accounts.push(acc); store.saveAccounts(accounts);
       UI.login.password = ''; UI.login.error = ''; UI.login.ok = '';
@@ -548,7 +547,7 @@ var ADMIN_TABS = [['messages', 'Inbox'], ['reviews', 'Course reviews'], ['storie
 function adminView() {
   var p = store.profile();
   if (!p || p.role !== 'admin') {
-    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is only for the site owner — the first account created on this site. Sign in with the admin account to manage messages and moderate community content.', '<button type="button" class="btn-primary" data-go="login">Sign in with the admin account</button>') + '</div>';
+    return '<div style="max-width:36rem;margin:0 auto">' + empty('Admin access only', 'The Admin Panel is only for the site owner. Sign in with the admin account to manage messages and moderate community content.', '<button type="button" class="btn-primary" data-go="login">Sign in with the admin account</button>') + '</div>';
   }
   UI.adminTab = UI.adminTab || 'messages';
   var c = counts();
